@@ -28,4 +28,7 @@ public:
 
 	glm::vec3 aim;
 	ViewPlane view;          // The camera viewplane, this is the view that we will render 
+
+private:
+	ofColor lambertian(SceneObject *obj, Light *light, glm::vec3 point, glm::vec3 normal);
 };

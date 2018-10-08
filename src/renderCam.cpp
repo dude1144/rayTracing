@@ -56,26 +56,26 @@ void RenderCam::renderImage(vector<SceneObject*> objects, ofImage *image, vector
 				image->setColor(i, (image->getHeight() -j) - 1, ofGetBackgroundColor());
 			else
 			{
-				ofColor col;
+				ofColor col = ofColor(0,0,0);
 
 				for (int i = 0; i < lights.size(); i++)
 				{
-					col = objects[index]->diffuseColor * 
-						(lights[i]->intensity/std::pow( glm::length(lights[i]->position - hitPoint), 2) ) *
-							std::max(0.0f, glm::dot(glm::normalize(hitNormal), glm::normalize(lights[i]->position - hitPoint)));
+					col = col + lambertian(objects[index], lights[i], hitPoint, hitNormal);
 					
-					/*cout << "original Color: " << objects[index]->diffuseColor <<
-							", intensity: " << (lights[i]->intensity / std::pow(glm::length(lights[i]->position - hitPoint), 2))  <<
-							", dot product: (surface normal: " << hitNormal <<
-							", light direction: " << glm::normalize(lights[i]->position - hitPoint) <<
-							", product: "<< std::max(0.0f, glm::dot(glm::normalize(hitNormal), glm::normalize(lights[i]->position - hitPoint))) <<
-							"), final color: " << col << "\n";*/
 				}
 
-				image->setColor(i, (image->getHeight() - j) - 1,
-					col  + (col * ambientIntensity));
+				image->setColor(i, (image->getHeight() - j) - 1, col  + (col *ambientColor * ambientIntensity));
 			}
 			
 		}
 	}
+	cout << "done\n";
+}
+
+ofColor RenderCam::lambertian(SceneObject * obj, Light * light, glm::vec3 point, glm::vec3 normal)
+{
+	return obj->diffuseColor *
+		(light->intensity / std::pow(glm::length(light->position - point), 2)) *
+		std::max(0.0f, glm::dot(glm::normalize(normal), glm::normalize(light->position - point))) *
+		light->color;;
 }
