@@ -10,11 +10,13 @@
 class RenderCam : public SceneObject
 {
 public:
-	Light ambientLight;
+	ofColor ambientColor;
+	float   ambientIntensity;
 
 	RenderCam() 
 	{
-		ambientLight = Light(1, ofColor::white);
+		ambientColor = ofColor(255, 255, 255);
+		ambientIntensity = .05;
 		position = glm::vec3(0, 0, 10);
 		aim = glm::vec3(0, 0, -1);
 	}
@@ -22,7 +24,7 @@ public:
 	void draw() { ofDrawBox(position, 1.0); };
 	void drawFrustum();
 
-	void renderImage(vector<SceneObject*> objects, ofImage *image);
+	void renderImage(vector<SceneObject*> objects, ofImage *image, vector<Light*> lights);
 
 	glm::vec3 aim;
 	ViewPlane view;          // The camera viewplane, this is the view that we will render 

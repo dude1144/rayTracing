@@ -1,6 +1,7 @@
 #include "renderCam.h"
 #include <limits>
 #include <iostream>
+#include <cmath>
 
 Ray RenderCam::getRay(float u, float v) 
 {
@@ -21,7 +22,7 @@ void RenderCam::drawFrustum() {
 	r4.draw(dist);
 }
 
-void RenderCam::renderImage(vector<SceneObject*> objects, ofImage *image)
+void RenderCam::renderImage(vector<SceneObject*> objects, ofImage *image, vector<Light*> lights)
 {
 	std::cout << "rendering with resolution: " << image->getWidth() << " x " << image->getHeight() << "\n";
 	for (int i = 0; i < image->getWidth(); i++)
@@ -30,7 +31,7 @@ void RenderCam::renderImage(vector<SceneObject*> objects, ofImage *image)
 		{
 			float u = (i + .5) / image->getWidth();
 			float v = (j + .5) / image->getHeight();
-			glm::vec3 point, normal;
+			glm::vec3 point, normal, hitPoint, hitNormal;
 			float shortestDistance = std::numeric_limits<float>::max();
 			int index = -1;
 
@@ -44,6 +45,8 @@ void RenderCam::renderImage(vector<SceneObject*> objects, ofImage *image)
 					{
 						shortestDistance = glm::length(point - position);
 						index = k;
+						hitPoint = point;
+						hitNormal = normal;
 					}
 				}
 			}
@@ -52,7 +55,26 @@ void RenderCam::renderImage(vector<SceneObject*> objects, ofImage *image)
 			if (index == -1)
 				image->setColor(i, (image->getHeight() -j) - 1, ofGetBackgroundColor());
 			else
-				image->setColor(i, (image->getHeight() - j) - 1, objects[index]->diffuseColor * ambientLight.intensity);
+			{
+				ofColor col;
+
+				for (int i = 0; i < lights.size(); i++)
+				{
+					col = objects[index]->diffuseColor * 
+						(lights[i]->intensity/std::pow( glm::length(lights[i]->position - hitPoint), 2) ) *
+							std::max(0.0f, glm::dot(glm::normalize(hitNormal), glm::normalize(lights[i]->position - hitPoint)));
+					
+					/*cout << "original Color: " << objects[index]->diffuseColor <<
+							", intensity: " << (lights[i]->intensity / std::pow(glm::length(lights[i]->position - hitPoint), 2))  <<
+							", dot product: (surface normal: " << hitNormal <<
+							", light direction: " << glm::normalize(lights[i]->position - hitPoint) <<
+							", product: "<< std::max(0.0f, glm::dot(glm::normalize(hitNormal), glm::normalize(lights[i]->position - hitPoint))) <<
+							"), final color: " << col << "\n";*/
+				}
+
+				image->setColor(i, (image->getHeight() - j) - 1,
+					col  + (col * ambientIntensity));
+			}
 			
 		}
 	}

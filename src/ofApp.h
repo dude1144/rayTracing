@@ -32,6 +32,7 @@
 #include "Plane.h"
 #include "viewPlane.h"
 #include "renderCam.h"
+#include "light.h"
 
 class ofApp : public ofBaseApp {
 
@@ -59,6 +60,7 @@ public:
 	ofCamera  *theCam;    // set to current camera either mainCam or sideCam
 	ofImage   image;
 	vector<SceneObject*> objects;
+	vector<Light*> lights;
 
 	// set up one render camera to render image throughn
 	//

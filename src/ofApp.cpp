@@ -1,7 +1,4 @@
 #include "ofApp.h"
-#include "ray.h"
-#include "sceneObject.h"
-#include "stdlib.h"
 // Intersect Ray with Plane  (wrapper on glm::intersect*
 //
 // Convert (u, v) to (x, y, z)
@@ -21,10 +18,11 @@
 //--------------------------------------------------------------
 void ofApp::setup() 
 {
-	objects.push_back(new Sphere(glm::vec3(-.5, 0, 0), 1, ofColor::green));
+	objects.push_back(new Sphere(glm::vec3(0, 0, 0), 1, ofColor::green));
 	objects.push_back(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor::red));
 	objects.push_back(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor::blue));
 	objects.push_back(new Plane(glm::vec3(0, -2, 0), glm::vec3(0, 1, 0), ofColor::lightGray));
+	lights.push_back(new PointLight(glm::vec3(2, 3, 2), (glm::vec3(0, 0, 0) - glm::vec3(2, 2, 2)), 20, ofColor::white));
 
 	image.allocate(1200, 800, OF_IMAGE_COLOR_ALPHA);
 
@@ -46,7 +44,6 @@ void ofApp::draw() {
 	else
 	{
 		theCam->begin();
-		ofSetColor(ofColor::green);
 		ofNoFill();
 
 		ofSetColor(ofColor::lightSkyBlue);
@@ -59,6 +56,13 @@ void ofApp::draw() {
 			ofSetColor(objects[i]->diffuseColor);
 			objects[i]->draw();
 		}
+
+		for (int i = 0; i < lights.size(); i++)
+		{
+			ofSetColor(lights[i]->color);
+			lights[i]->draw();
+		}
+
 
 		theCam->end();
 	}
@@ -76,7 +80,7 @@ void ofApp::keyReleased(int key) {
 		break;
 	case 'R':
 	case 'r':
-		renderCam.renderImage(objects, &image);
+		renderCam.renderImage(objects, &image, lights);
 		image.save("render.png", OF_IMAGE_QUALITY_BEST);
 		image.load("render.png");
 		break;

@@ -26,6 +26,7 @@ public:
 
 	void draw() 
 	{
+
 		ofDrawRectangle(glm::vec3(min.x, min.y, position.z), width(), height());
 	}
 	float width() 

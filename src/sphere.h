@@ -16,6 +16,7 @@ public:
 	}
 	void draw() 
 	{
+		ofSetColor(diffuseColor);
 		ofDrawSphere(position, radius);
 	}
 };
