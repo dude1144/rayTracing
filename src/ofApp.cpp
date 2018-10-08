@@ -21,7 +21,7 @@ void ofApp::setup()
 	objects.push_back(new Sphere(glm::vec3(0, 0, 0), 1, ofColor::green));
 	objects.push_back(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor::red));
 	objects.push_back(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor::blue));
-	objects.push_back(new Plane(glm::vec3(0, -2, 0), glm::vec3(0, 1, 0), ofColor::lightGray));
+	objects.push_back(new Plane(glm::vec3(0, -1.6, 0), glm::vec3(0, 1, 0), ofColor::lightGray));
 	lights.push_back(new PointLight(glm::vec3(2, 3, 2), (glm::vec3(0, 0, 0) - glm::vec3(2, 2, 2)), 20, ofColor(255,255,255)));
 
 	image.allocate(1200, 800, OF_IMAGE_COLOR_ALPHA);

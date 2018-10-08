@@ -57,11 +57,12 @@ void RenderCam::renderImage(vector<SceneObject*> objects, ofImage *image, vector
 			else
 			{
 				ofColor col = ofColor(0,0,0);
-
-				for (int i = 0; i < lights.size(); i++)
+				for (int k = 0; k < lights.size(); k++)
 				{
-					col = col + lambertian(objects[index], lights[i], hitPoint, hitNormal);
-					
+					if (!inShadow(objects, lights[k], hitPoint, hitNormal))
+					{
+						col = col + lambertian(objects[index], lights[k], hitPoint, hitNormal);
+					}
 				}
 
 				image->setColor(i, (image->getHeight() - j) - 1, col  + (col *ambientColor * ambientIntensity));
@@ -78,4 +79,15 @@ ofColor RenderCam::lambertian(SceneObject * obj, Light * light, glm::vec3 point,
 		(light->intensity / std::pow(glm::length(light->position - point), 2)) *
 		std::max(0.0f, glm::dot(glm::normalize(normal), glm::normalize(light->position - point))) *
 		light->color;;
+}
+
+bool RenderCam::inShadow(vector<SceneObject*> objects, Light * light, glm::vec3 point, glm::vec3 normal)
+{
+	for (int i = 0; i < objects.size(); i++)
+	{
+		glm::vec3 p, n;
+		if ( objects[i]->intersect(Ray((point + normal*.00005), glm::normalize(light->position - point)), p, n) )
+			return true;
+	}
+	return false;
 }

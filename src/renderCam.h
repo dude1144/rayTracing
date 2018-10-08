@@ -31,4 +31,5 @@ public:
 
 private:
 	ofColor lambertian(SceneObject *obj, Light *light, glm::vec3 point, glm::vec3 normal);
+	bool inShadow(vector<SceneObject*> objects, Light *light, glm::vec3 point, glm::vec3 normal);
 };
