@@ -65,7 +65,7 @@ void RenderCam::renderImage(vector<SceneObject*> objects, ofImage *image, vector
 					}
 				}
 
-				image->setColor(i, (image->getHeight() - j) - 1, col  + (objects[index]->diffuseColor * ambientColor * ambientIntensity));
+				image->setColor(i, (image->getHeight() - j) - 1, col  + (objects[index]->mat.diffuseColor * ambientColor * ambientIntensity));
 			}
 			
 		}
@@ -75,7 +75,7 @@ void RenderCam::renderImage(vector<SceneObject*> objects, ofImage *image, vector
 
 ofColor RenderCam::lambertian(SceneObject * obj, Light * light, glm::vec3 point, glm::vec3 normal)
 {
-	return obj->diffuseColor *
+	return obj->mat.diffuseColor *
 			(light->intensity / std::pow(glm::length(light->position - point), 2)) *
 			std::max(0.0f, glm::dot(glm::normalize(normal), glm::normalize(light->position - point))) *
 			light->color;
@@ -85,9 +85,9 @@ ofColor RenderCam::blinn_phong(SceneObject *obj, Light *light, glm::vec3 point, 
 {
 	glm::vec3 v = glm::normalize(this->position - point);
 	glm::vec3 l = glm::normalize(light->position - point);
-	return obj->specularColor *
+	return obj->mat.specularColor *
 			(light->intensity / std::pow(glm::length(light->position - point), 2)) *
-			std::pow(std::max(0.0f, glm::dot(glm::normalize(normal), glm::normalize( (l + v) / glm::length(l + v) ))), obj->p) *
+			std::pow(std::max(0.0f, glm::dot(glm::normalize(normal), glm::normalize( (l + v) / glm::length(l + v) ))), obj->mat.p) *
 			light->color;
 }
 

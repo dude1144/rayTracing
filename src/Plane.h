@@ -18,17 +18,17 @@ public:
 		position = p; normal = n;
 		width = w;
 		height = h;
-		diffuseColor = diffuse;
+		mat.diffuseColor = diffuse;
 		plane.rotateDeg(90, 1, 0, 0);
 	}
 	Plane(glm::vec3 pos, glm::vec3 n, ofColor diffuse = ofColor::darkOliveGreen, ofColor spec = ofColor::olive, float p = 1, float w = 20, float h = 20)
 	{
 		position = pos; normal = n;
-		this->p = p;
+		mat.p = p;
 		width = w;
 		height = h;
-		diffuseColor = diffuse;
-		specularColor = spec;
+		mat.diffuseColor = diffuse;
+		mat.specularColor = spec;
 		plane.rotateDeg(90, 1, 0, 0);
 	}
 	Plane() { }
@@ -37,7 +37,7 @@ public:
 
 	void draw() 
 	{
-		ofSetColor(diffuseColor);
+		ofSetColor(mat.diffuseColor);
 		plane.setPosition(position);
 		plane.setWidth(width);
 		plane.setHeight(height);

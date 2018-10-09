@@ -1,6 +1,7 @@
 #pragma once
 #include "ofMain.h"
 #include "ray.h"
+#include "material.h"
 
 class SceneObject 
 {
@@ -15,8 +16,7 @@ public:
 
 	// material properties (we will ultimately replace this with a Material class - TBD)
 	//
-	ofColor diffuseColor = ofColor::grey;    // default colors - can be changed.
-	ofColor specularColor = ofColor::lightGray;
-	float p = 1.0f;
+
+	Material mat = Material(ofColor::gray, ofColor::lightGray, 1.0f);
 };
 
