@@ -20,6 +20,7 @@ public:
 		position = glm::vec3(0, 0, 10);
 		aim = glm::vec3(0, 0, -1);
 	}
+
 	Ray getRay(float u, float v);
 	void draw() { ofDrawBox(position, 1.0); };
 	void drawFrustum();
@@ -31,5 +32,6 @@ public:
 
 private:
 	ofColor lambertian(SceneObject *obj, Light *light, glm::vec3 point, glm::vec3 normal);
+	ofColor blinn_phong(SceneObject *obj, Light *light, glm::vec3 point, glm::vec3 normal);
 	bool inShadow(vector<SceneObject*> objects, Light *light, glm::vec3 point, glm::vec3 normal);
 };

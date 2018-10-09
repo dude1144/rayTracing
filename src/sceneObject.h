@@ -17,5 +17,6 @@ public:
 	//
 	ofColor diffuseColor = ofColor::grey;    // default colors - can be changed.
 	ofColor specularColor = ofColor::lightGray;
+	float p = 1.0f;
 };
 

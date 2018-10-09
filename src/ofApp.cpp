@@ -18,11 +18,11 @@
 //--------------------------------------------------------------
 void ofApp::setup() 
 {
-	objects.push_back(new Sphere(glm::vec3(0, 0, 0), 1, ofColor::green));
-	objects.push_back(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor::red));
-	objects.push_back(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor::blue));
-	objects.push_back(new Plane(glm::vec3(0, -1.6, 0), glm::vec3(0, 1, 0), ofColor::lightGray));
-	lights.push_back(new PointLight(glm::vec3(2, 3, 2), (glm::vec3(0, 0, 0) - glm::vec3(2, 2, 2)), 20, ofColor(255,255,255)));
+	objects.push_back(new Sphere(glm::vec3(0, 0, 0), 1, ofColor(74, 219, 94), ofColor::gray, 5));
+	objects.push_back(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor(255,65,65), ofColor::gray, 5));
+	objects.push_back(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor(65, 142, 255), ofColor::gray, 5));
+	objects.push_back(new Plane(glm::vec3(0, -1.6, 0), glm::vec3(0, 1, 0), ofColor::lightGray, ofColor::gray, 5));
+	lights.push_back(new PointLight(glm::vec3(2, 3, 2), (glm::vec3(0, 0, 0) - glm::vec3(2, 2, 2)), 10, ofColor(255,255,255)));
 
 	image.allocate(1200, 800, OF_IMAGE_COLOR_ALPHA);
 

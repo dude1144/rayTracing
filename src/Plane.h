@@ -21,6 +21,16 @@ public:
 		diffuseColor = diffuse;
 		plane.rotateDeg(90, 1, 0, 0);
 	}
+	Plane(glm::vec3 pos, glm::vec3 n, ofColor diffuse = ofColor::darkOliveGreen, ofColor spec = ofColor::olive, float p = 1, float w = 20, float h = 20)
+	{
+		position = pos; normal = n;
+		this->p = p;
+		width = w;
+		height = h;
+		diffuseColor = diffuse;
+		specularColor = spec;
+		plane.rotateDeg(90, 1, 0, 0);
+	}
 	Plane() { }
 
 	bool intersect(const Ray &ray, glm::vec3 &point, glm::vec3 &normal);
