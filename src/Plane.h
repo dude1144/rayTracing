@@ -37,10 +37,11 @@ public:
 	Plane() { }
 
 	bool intersect(const Ray &ray, glm::vec3 &point, glm::vec3 &normal);
+	bool intersectView(const Ray &ray, glm::vec3 &point, glm::vec3 &normal);
 
 	void draw() 
 	{
-		ofSetColor(mat.diffuseColor);
+		//ofSetColor(mat.diffuseColor);
 		plane.setPosition(position);
 		plane.setWidth(width);
 		plane.setHeight(height);

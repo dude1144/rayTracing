@@ -14,3 +14,16 @@ bool Plane::intersect(const Ray &ray, glm::vec3 & point, glm::vec3 &normal)
 	}
 	return (hit);
 }
+
+bool Plane::intersectView(const Ray &ray, glm::vec3 & point, glm::vec3 &normal)
+{
+	return intersectRayTriangle(ray.p, ray.d, 
+		glm::vec3((0 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2)),
+		glm::vec3((1 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2)),
+		glm::vec3((0 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2)),
+		glm::vec3(0,0,0)) || intersectRayTriangle(ray.p, ray.d,
+		glm::vec3((0 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2)),
+		glm::vec3((1 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2)),
+		glm::vec3((1 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2)),
+		glm::vec3(0, 0, 0));
+}

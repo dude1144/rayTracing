@@ -7,7 +7,8 @@
 
 // view plane for render camera
 // 
-class  ViewPlane : public Plane {
+class  ViewPlane : public Plane 
+{
 public:
 	glm::vec2 min, max;
 
@@ -29,7 +30,6 @@ public:
 
 	void draw()
 	{
-
 		ofDrawRectangle(glm::vec3(min.x, min.y, position.z), width(), height());
 	}
 	float width()

@@ -35,8 +35,8 @@ public:
 
 	bool showImage = false;
 	bool showGui = true;
-	//bool dragged = false;
-	//bool pressed = false;
+	bool dragged = false;
+	bool pressed = false;
 
 	ofEasyCam  mainCam;
 	ofCamera sideCam;

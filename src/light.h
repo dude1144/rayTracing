@@ -24,5 +24,5 @@ public:
 	PointLight(glm::vec3 pos, glm::vec3 dir, float i, ofColor col) { intensity = i; color = col; direction = dir; position = pos; }
 	void draw() { ofDrawSphere(position, .1); }
 	bool intersect(const Ray &ray, glm::vec3 &point, glm::vec3 &normal) { return glm::intersectRaySphere(ray.p, ray.d, position, .1f, point, normal); }
-
+	bool intersectView(const Ray &ray, glm::vec3 &point, glm::vec3 &normal) { return glm::intersectRaySphere(ray.p, ray.d, position, .1f, point, normal); }
 };

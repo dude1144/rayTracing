@@ -16,5 +16,6 @@ public:
 
 	//point and normal save the point the ray intersects as well as the normal at that point
 	virtual bool intersect(const Ray &ray, glm::vec3 &point, glm::vec3 &normal) { return false; }
+	virtual bool intersectView(const Ray &ray, glm::vec3 &point, glm::vec3 &normal) { return false; }
 };
 
