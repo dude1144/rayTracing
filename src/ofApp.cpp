@@ -1,4 +1,5 @@
 #include "ofApp.h"
+#include <iostream>
 // Intersect Ray with Plane  (wrapper on glm::intersect*
 //
 // Convert (u, v) to (x, y, z)
@@ -22,9 +23,17 @@ void ofApp::setup()
 	objects.push_back(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor(255,65,65), ofColor::gray, 20));
 	objects.push_back(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor(65, 142, 255), ofColor::gray, 20));
 	objects.push_back(new Plane(glm::vec3(0, -1.6, 0), glm::vec3(0, 1, 0), ofColor::lightGray, ofColor::gray, 20));
-	lights.push_back(new PointLight(glm::vec3(2, 3, 2), (glm::vec3(0, 0, 0) - glm::vec3(2, 2, 2)), 10, ofColor(255,255,255)));
+	lights.push_back(new PointLight(glm::vec3(2, 3, 2), (glm::vec3(0, 0, 0) - glm::vec3(2, 3, 2)), 10, ofColor(255,255,255)));
+	lights.push_back(new PointLight(glm::vec3(-4, 2, 4), (glm::vec3(0, 0, 0) - glm::vec3(-4, 1, 4)), 10, ofColor(255, 255, 255)));
 
 	image.allocate(1200, 800, OF_IMAGE_COLOR_ALPHA);
+
+	gui.setup();
+	gui.add(obj1P.setup("Object 1 P", 20, 0, 1000));
+	gui.add(obj2P.setup("Object 2 P", 20, 0, 1000));
+	gui.add(obj3P.setup("Object 3 P", 20, 0, 1000));
+	gui.add(light1Intensity.setup("Light 1 Intensity", 10, 0, 100));
+	gui.add(light2Intensity.setup("Light 2 Intensity", 10, 0, 100));
 
 	ofSetBackgroundColor(ofColor::black);
 	mainCam.setDistance(30);
@@ -36,6 +45,11 @@ void ofApp::setup()
 //--------------------------------------------------------------
 void ofApp::update() 
 {
+	objects[0]->mat.p = obj1P;
+	objects[1]->mat.p = obj2P;
+	objects[2]->mat.p = obj3P;
+	lights[0]->intensity = light1Intensity;
+	lights[1]->intensity = light2Intensity;
 }
 //--------------------------------------------------------------
 void ofApp::draw() {
@@ -43,6 +57,9 @@ void ofApp::draw() {
 		image.draw(0,0);
 	else
 	{
+		if (showGui)
+			gui.draw();
+
 		theCam->begin();
 		ofNoFill();
 
@@ -53,15 +70,24 @@ void ofApp::draw() {
 
 		for (int i = 0; i < objects.size(); i++)
 		{
-			ofSetColor(objects[i]->mat.diffuseColor);
+			if (objects[i] == selected)
+				ofSetColor(ofColor(247, 189, 0));
+			else
+				ofSetColor(objects[i]->mat.diffuseColor);
 			objects[i]->draw();
 		}
 
 		for (int i = 0; i < lights.size(); i++)
 		{
-			ofSetColor(lights[i]->color);
+			if(lights[i] == selected)
+				ofSetColor(ofColor(247, 189, 0));
+			else
+				ofSetColor(lights[i]->color);
 			lights[i]->draw();
 		}
+
+		ofSetColor(ofColor::gray);
+		mainCam.drawFrustum();
 
 
 		theCam->end();
@@ -90,8 +116,9 @@ void ofApp::keyReleased(int key) {
 			mainCam.disableMouseInput();
 		else mainCam.enableMouseInput();
 		break;
-	case 'F':
-	case 'b':
+	case 'G':
+	case 'g':
+		showGui = !showGui;
 		break;
 	case 'f':
 		ofToggleFullscreen();
@@ -111,13 +138,48 @@ void ofApp::keyReleased(int key) {
 void ofApp::mouseMoved(int x, int y) {
 }
 //--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button) {
+void ofApp::mouseDragged(int x, int y, int button) 
+{
+	//dragged = true;
 }
 //--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button) {
+void ofApp::mousePressed(int x, int y, int button) 
+{
+	
 }
 //--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button) {
+void ofApp::mouseReleased(int x, int y, int button) 
+{
+	/*
+	if (dragged)
+		dragged = false;
+	else
+	{
+		Ray selectRay = Ray(theCam->getPosition(), glm::normalize(theCam->screenToWorld(glm::vec3(ofGetMouseX(), ofGetMouseY(), 0) - theCam->getPosition())));
+		for (int i = 0; i < objects.size() + lights.size(); i++)
+		{
+			for (int i = 0; i < lights.size(); i++)
+			{
+				if (lights[i]->intersect(selectRay, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0)))
+				{
+					selected = lights[i];
+					cout << "selected Light: " << i << "\n";
+					return;
+				}
+			}
+			for (int i = 0; i < objects.size(); i++)
+			{
+				if (objects[i]->intersect(selectRay, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0)))
+				{
+					selected = objects[i];
+					cout << "selected object: " << i << "\n";
+					return;
+				}
+			}
+		}
+		cout << "nothing selected\n";
+		selected = nullptr;
+	}*/
 }
 //--------------------------------------------------------------
 void ofApp::mouseEntered(int x, int y) {
@@ -132,5 +194,6 @@ void ofApp::windowResized(int w, int h) {
 void ofApp::gotMessage(ofMessage msg) {
 }
 //--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo) {
+void ofApp::dragEvent(ofDragInfo dragInfo) 
+{
 }

@@ -1,3 +1,6 @@
+//Austin Anderson
+//010640955
+//from code given by professor
 #pragma once
 #include "ofMain.h"
 

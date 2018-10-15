@@ -1,3 +1,6 @@
+//Austin Anderson
+//010640955
+//from code given by professor
 #include "Plane.h"
 
 bool Plane::intersect(const Ray &ray, glm::vec3 & point, glm::vec3 &normal) 

@@ -1,3 +1,6 @@
+//Austin Anderson
+//010640955
+//from code given by professor
 #pragma once
 
 #include "Plane.h"
@@ -11,7 +14,7 @@ public:
 	ViewPlane(glm::vec2 p0, glm::vec2 p1) { min = p0; max = p1; }
 	ViewPlane(glm::vec2 p0, glm::vec2 p1, glm::vec3 n) { min = p0; max = p1; normal = n; }
 
-	ViewPlane() 
+	ViewPlane()
 	{                         // create reasonable defaults (6x4 aspect)
 		min = glm::vec2(-3, -2);
 		max = glm::vec2(3, 2);
@@ -24,16 +27,16 @@ public:
 
 	glm::vec3 toWorld(float u, float v);   //   (u, v) --> (x, y, z) [ world space ]
 
-	void draw() 
+	void draw()
 	{
 
 		ofDrawRectangle(glm::vec3(min.x, min.y, position.z), width(), height());
 	}
-	float width() 
+	float width()
 	{
 		return (max.x - min.x);
 	}
-	float height() 
+	float height()
 	{
 		return (max.y - min.y);
 	}
