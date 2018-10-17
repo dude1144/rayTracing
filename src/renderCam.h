@@ -22,6 +22,8 @@ public:
 		ambientIntensity = .05;
 		position = glm::vec3(0, 0, 10);
 		aim = glm::vec3(0, 0, -1);
+
+		settings.setup();
 	}
 
 	Ray getRay(float u, float v);
@@ -32,7 +34,11 @@ public:
 	void renderImage(vector<SceneObject*> objects, ofImage *image, vector<Light*> lights);       //render the image
 
 	glm::vec3 aim;
-	ViewPlane view;          // The camera viewplane, this is the view that we will render 
+	ViewPlane view;          // The camera viewplane, this is the view that we will render
+	void updateFromUI()
+	{
+		return;
+	}
 
 private:
 	ofColor lambertian(SceneObject *obj, Light *light, glm::vec3 point, glm::vec3 normal);       //calculate lambertian color

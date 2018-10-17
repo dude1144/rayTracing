@@ -2,7 +2,6 @@
 //010640955
 //from code given by professor
 #include "renderCam.h"
-#include <limits>
 #include <iostream>
 #include <cmath>
 
@@ -81,7 +80,7 @@ ofColor RenderCam::lambertian(SceneObject * obj, Light * light, glm::vec3 point,
 	return obj->mat.diffuseColor *
 		(light->intensity / std::pow(glm::length(light->position - point), 2)) *
 		std::max(0.0f, glm::dot(glm::normalize(normal), glm::normalize(light->position - point))) *
-		light->color;
+		light->mat.diffuseColor;
 }
 
 ofColor RenderCam::blinn_phong(SceneObject *obj, Light *light, glm::vec3 point, glm::vec3 normal)
@@ -91,7 +90,7 @@ ofColor RenderCam::blinn_phong(SceneObject *obj, Light *light, glm::vec3 point, 
 	return obj->mat.specularColor *
 		(light->intensity / std::pow(glm::length(light->position - point), 2)) *
 		std::pow(std::max(0.0f, glm::dot(glm::normalize(normal), glm::normalize((l + v) / glm::length(l + v)))), obj->mat.p) *
-		light->color;
+		light->mat.diffuseColor;
 }
 
 bool RenderCam::inShadow(vector<SceneObject*> objects, Light * light, glm::vec3 point, glm::vec3 normal)
