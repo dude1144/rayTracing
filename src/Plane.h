@@ -96,7 +96,6 @@ public:
 	{
 		position = glm::vec3((float)xInput, (float)yInput, (float)zInput);
 		normal = glm::normalize(glm::vec3((float)xNormalInput, (float)yNormalInput, (float)zNormalInput));
-		normal = glm::normalize(normal);
 		mat.p = pInput;
 		mat.diffuseColor = diffuseInput;
 		mat.specularColor = specularInput;
