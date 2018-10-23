@@ -12,7 +12,7 @@ class SceneObject
 {
 public:
 	glm::vec3 position = glm::vec3(0, 0, 0);
-	Material mat = Material(ofColor::gray, ofColor::lightGray, 1.0f);
+	Material mat = Material(ofColor::white, ofColor::lightGrey, 10.0f);
 	ofxPanel settings;
 
 	virtual void draw() = 0;    // pure virtual funcs - must be overloaded

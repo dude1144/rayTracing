@@ -46,15 +46,7 @@ public:
 	vector<SceneObject*> objects;
 	vector<Light*> lights;
 
-	ofxPanel * gui;
-	/*
-	ofxInputField<float> obj1P;
-	ofxInputField<float> obj2P;
-	ofxInputField<float> obj3P;
-	ofxInputField<float> light1Intensity;
-	ofxInputField<float> light2Intensity;
-	ofxInputField<float>  textField;
-	*/
+	ofxPanel *gui;
 
 	// set up one render camera to render image throughn
 	//
