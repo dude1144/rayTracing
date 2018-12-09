@@ -3,10 +3,13 @@
 //from code given by professor
 #pragma once
 
-#include "sceneObject.h"
+//#include "sceneObject.h"
+#include "primitives.h"
+#include "scene.h"
 #include <vector>
 #include "viewPlane.h"
 #include "light.h"
+
 
 //  render camera  - currently must be z axis aligned (we will improve this in project 4)
 //
@@ -31,7 +34,7 @@ public:
 	void drawFrustum();
 	glm::vec3 screenToWorld(float u, float v) { return view.toWorld(u, v); }
 
-	void renderImage(vector<SceneObject*> objects, ofImage *image, vector<Light*> lights);       //render the image
+	void renderImage(Scene scene, ofImage *image);       //render the image
 
 	glm::vec3 aim;
 	ViewPlane view;          // The camera viewplane, this is the view that we will render
@@ -41,7 +44,7 @@ public:
 	}
 
 private:
-	ofColor lambertian(SceneObject *obj, Light *light, glm::vec3 point, glm::vec3 normal);       //calculate lambertian color
-	ofColor blinn_phong(SceneObject *obj, Light *light, glm::vec3 point, glm::vec3 normal);      //calculate Blinn-Phong color
-	bool inShadow(vector<SceneObject*> objects, Light *light, glm::vec3 point, glm::vec3 normal);//determine if point is in a shadow
+	ofColor lambertian(SceneObject *obj, Light *light, IntersectInfo intersect);       //calculate lambertian color
+	ofColor blinn_phong(SceneObject *obj, Light *light, IntersectInfo intersect);      //calculate Blinn-Phong color
+	bool inShadow(vector<SceneObject*> objects, Light *light, IntersectInfo intersect);//determine if point is in a shadow
 };

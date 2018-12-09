@@ -3,7 +3,7 @@
 //from code given by professor
 #pragma once
 
-#include "Plane.h"
+#include "primitives.h"
 
 // view plane for render camera
 // 

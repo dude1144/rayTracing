@@ -5,14 +5,13 @@
 #include <vector>
 #include "ofMain.h"
 #include "ofxGui.h"
-#include "ray.h"
-#include "sceneObject.h"
-#include "sphere.h"
+#include "primitives.h"
+#include "scene.h"
 #include "mesh.h"
-#include "Plane.h"
 #include "viewPlane.h"
 #include "renderCam.h"
 #include "light.h"
+#include "bounds.h"
 
 class ofApp : public ofBaseApp {
 
@@ -41,10 +40,13 @@ public:
 	ofEasyCam  mainCam;
 	ofCamera sideCam;
 	ofCamera  *theCam;    // set to current camera either mainCam or sideCam
+
 	ofImage   image;
+
 	SceneObject *selected;
-	vector<SceneObject*> objects;
-	vector<Light*> lights;
+	Scene scene;
+	BoundingBox bound = BoundingBox(glm::vec3(-1, 1, -1), glm::vec3(1, 1, -1), glm::vec3(-1, 1, 1), glm::vec3(1, 1, 1),
+		glm::vec3(-1, -1, -1), glm::vec3(1, -1, -1), glm::vec3(-1, -1, 1), glm::vec3(1, -1, 1));
 
 	ofxPanel *gui;
 

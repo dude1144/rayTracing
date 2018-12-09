@@ -2,7 +2,7 @@
 //010640955
 #pragma once
 #include "ofMain.h"
-#include "sceneObject.h"
+#include "primitives.h"
 
 class Light : public SceneObject
 {
@@ -75,6 +75,22 @@ public:
 		mat.diffuseColor = colorInput;
 	}
 
-	bool intersect(const Ray &ray, glm::vec3 &point, glm::vec3 &normal) { return glm::intersectRaySphere(ray.p, ray.d, position, .1f, point, normal); }
-	bool intersectView(const Ray &ray, glm::vec3 &point, glm::vec3 &normal) { return glm::intersectRaySphere(ray.p, ray.d, position, .1f, point, normal); }
+	bool intersect(const Ray &ray, IntersectInfo &intersect) 
+	{ 
+		if (glm::intersectRaySphere(ray.p, ray.d, position, .1f, intersect.point, intersect.normal))
+		{
+			intersect.dist = glm::length(intersect.point - ray.p);
+			return true;
+		}
+		return false;
+	}
+	bool intersectView(const Ray &ray, IntersectInfo &intersect) 
+	{
+		if (glm::intersectRaySphere(ray.p, ray.d, position, .1f, intersect.point, intersect.normal))
+		{
+			intersect.dist = glm::length(intersect.point - ray.p);
+			return true;
+		}
+		return false;
+	}
 };
