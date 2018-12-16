@@ -1,0 +1,11 @@
+*.rc
+*.sln
+*.vcxproj
+*.filters
+*.user
+*.zip
+bin
+obj
+.vs/
+f
+*.make
