@@ -1,35 +1,25 @@
 #include "ofApp.h"
 #include <iostream>
 #include <limits>
-// Intersect Ray with Plane  (wrapper on glm::intersect*
-//
-// Convert (u, v) to (x, y, z)
-// We assume u,v is in [0, 1]
-//
-
-// Get a ray from the current camera position to the (u, v) position on
-// the ViewPlane
-//
-
-
-
-// This could be drawn a lot simpler but I wanted to use the getRay call
-// to test it at the corners.
-//
 
 //--------------------------------------------------------------
 void ofApp::setup() 
 {
-	scene.objects.push_back(new Sphere(glm::vec3(0, 0, 0), 1, ofColor(74, 219, 94), ofColor::gray, 20));
-	scene.objects.push_back(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor(255,65,65), ofColor::gray, 20));
-	scene.objects.push_back(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor(65, 142, 255), ofColor::gray, 20));
-	scene.objects.push_back(new Plane(glm::vec3(0, -1.6, 0), glm::vec3(0, 1, 0), ofColor::lightGray, ofColor::gray, 20));
-	scene.lights.push_back(new PointLight(glm::vec3(2, 3, 2), 10, ofColor(255,255,255)));
-	scene.lights.push_back(new PointLight(glm::vec3(-4, 2, 4), 10, ofColor(255, 255, 255)));
+	scene.add(new Sphere(glm::vec3(0, 0, 0), 1, ofColor(74, 219, 94), ofColor::gray, 20));
+	scene.add(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor(255,65,65), ofColor::gray, 20));
+	scene.add(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor(65, 142, 255), ofColor::gray, 20));
+	scene.add(new Plane(glm::vec3(0, -1.6, 0), glm::vec3(0, 1, 0), ofColor::lightGray, ofColor::gray, 20));
+	scene.add(new PointLight(glm::vec3(2, 3, 2), 10, ofColor(255,255,255)));
+	scene.add(new PointLight(glm::vec3(-4, 2, 4), 10, ofColor(255, 255, 255)));
 
 	image.allocate(1200, 800, OF_IMAGE_COLOR_ALPHA);
 	//image.allocate(60, 40, OF_IMAGE_COLOR_ALPHA);
 	//image.allocate(6, 4, OF_IMAGE_COLOR_ALPHA);
+
+#if _DEBUG // setup debug panel
+	debugPanel.setup("DEBUG", "settings.xml");
+	debugPanel.add(showIntersectionPoints.setup("Show Intersection Points", false));
+#endif
 
 	ofSetBackgroundColor(ofColor::black);
 	mainCam.setDistance(30);
@@ -51,6 +41,7 @@ void ofApp::draw()
 	ofSetColor(ofColor(255, 255, 255));
 	if (showImage)
 		image.draw(0,0);
+
 	else
 	{
 		ofEnableDepthTest();
@@ -64,6 +55,17 @@ void ofApp::draw()
 		renderCam.drawFrustum();
 		ofSetColor(ofColor::blue);
 		renderCam.draw();
+
+#if _DEBUG //draw intersection points
+		if (showIntersectionPoints)
+		{
+			ofSetColor(ofColor(204, 0, 153));
+			for (int i = 0; i < intersectionPoints.size(); i++)
+			{
+				ofDrawSphere(intersectionPoints[i], .05);
+			}
+		}
+#endif
 
 		for (int i = 0; i < scene.objects.size(); i++)
 		{
@@ -88,6 +90,13 @@ void ofApp::draw()
 		mainCam.drawFrustum();
 
 		theCam->end();
+#if _DEBUG // draw debug panel
+		if (showDebugPanel)
+		{
+			ofDisableDepthTest();
+			debugPanel.draw();
+		}
+#endif
 
 		if (selected && showGui)
 		{
@@ -147,6 +156,12 @@ void ofApp::keyReleased(int key)
 	case OF_KEY_F2:
 		theCam = &sideCam;
 		break;
+	case OF_KEY_F10:
+#if _DEBUG //toggle debug panel and update position 
+		showDebugPanel = !showDebugPanel;
+		debugPanel.setPosition(ofGetWindowWidth() - (debugPanel.getWidth() + 5), 10);
+#endif
+		break;
 	}
 }
 //--------------------------------------------------------------
@@ -162,6 +177,7 @@ void ofApp::mouseDragged(int x, int y, int button)
 void ofApp::mousePressed(int x, int y, int button) 
 {
 	pressed = true;
+
 	if (selected)
 	{
 		if (selected->settings.getShape().inside(x, y))
@@ -169,11 +185,21 @@ void ofApp::mousePressed(int x, int y, int button)
 			mainCam.disableMouseInput();
 		}
 	}
+#if _DEBUG // check if mouse is on debug panel
+	else if (showDebugPanel)
+	{
+		if (debugPanel.getShape().inside(x, y))
+		{
+			mainCam.disableMouseInput();
+		}
+	}
+#endif
 }
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button) 
 {
 	pressed = false;
+
 	if (!mainCam.getMouseInputEnabled())
 		mainCam.enableMouseInput();
 	if (dragged)
@@ -184,11 +210,17 @@ void ofApp::mouseReleased(int x, int y, int button)
 		//get a ray from camera position to viewport for selection
 		Ray selectRay = Ray(theCam->getPosition(), glm::normalize(theCam->screenToWorld(glm::vec3(ofGetMouseX(), ofGetMouseY(), 0)) - theCam->getPosition()));
 		float dist = std::numeric_limits<float>::max();
+#if _DEBUG //clear intersection list
+		intersectionPoints.clear();
+#endif
 		for (int i = 0; i < scene.lights.size(); i++)
 		{
 			IntersectInfo temp;
 			if (scene.lights[i]->intersectView(selectRay, temp))
 			{
+#if _DEBUG //add point to intersection list
+				intersectionPoints.push_back(temp.point);
+#endif
 				if (temp.dist < dist)
 				{
 					selected = scene.lights[i];
@@ -201,6 +233,9 @@ void ofApp::mouseReleased(int x, int y, int button)
 			IntersectInfo temp;
 			if (scene.objects[i]->intersectView(selectRay, temp))
 			{
+#if _DEBUG //add point to intersection list
+				intersectionPoints.push_back(temp.point);
+#endif
 				if (temp.dist < dist)
 				{
 					selected = scene.objects[i];
@@ -225,4 +260,5 @@ void ofApp::gotMessage(ofMessage msg) {
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo) 
 {
+	scene.add(new Mesh(dragInfo.files[0]));
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include <vector>
+#include "ofTrueTypeFont.h"
 #include "ofMain.h"
 #include "ofxGui.h"
 #include "primitives.h"
@@ -49,6 +50,16 @@ public:
 		glm::vec3(-1, -1, -1), glm::vec3(1, -1, -1), glm::vec3(-1, -1, 1), glm::vec3(1, -1, 1));
 
 	ofxPanel *gui;
+
+#if _DEBUG // debug tools
+
+	ofxPanel debugPanel;
+	bool showDebugPanel;
+
+	ofxToggle showIntersectionPoints;
+
+	vector<glm::vec3> intersectionPoints;
+#endif
 
 	// set up one render camera to render image throughn
 	//

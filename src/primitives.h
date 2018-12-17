@@ -3,8 +3,9 @@
 
 #pragma once
 #include "ofMain.h"
-#include "material.h"
+#include "ofxAssimpModelLoader.h"
 #include "ofxGui.h"
+#include "material.h"
 #include <limits>
 
 class Ray
@@ -44,6 +45,11 @@ public:
 	glm::vec3 position = glm::vec3(0, 0, 0);
 	Material mat = Material(ofColor::white, ofColor::lightGrey, 10.0f);
 	ofxPanel settings;
+	ofxGuiGroup positionGroup;
+	ofxInputField<float> xInput;
+	ofxInputField<float> yInput;
+	ofxInputField<float> zInput;
+
 	std::string name;
 
 	virtual void draw() = 0;
@@ -59,10 +65,7 @@ class Sphere : public SceneObject
 public:
 	//class members
 	float radius = 1.0;
-	ofxGuiGroup positionGroup;
-	ofxInputField<float> xInput;
-	ofxInputField<float> yInput;
-	ofxInputField<float> zInput;
+
 
 	Sphere()
 	{
@@ -122,11 +125,6 @@ public:
 	float width = 20;
 	float height = 20;
 	glm::vec3 normal = glm::vec3(0, 1, 0);
-
-	ofxGuiGroup positionGroup;
-	ofxInputField<float> xInput;
-	ofxInputField<float> yInput;
-	ofxInputField<float> zInput;
 	ofxGuiGroup normalGroup;
 	ofxInputField<float> xNormalInput;
 	ofxInputField<float> yNormalInput;
@@ -176,6 +174,22 @@ public:
 		plane.setHeight(height);
 		plane.setResolution(4, 4);
 		plane.drawWireframe();
+
+#if _DEBUG // draw corners of plane
+		glm::vec3 p1 = glm::vec3((0 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2));
+		glm::vec3 p2 = glm::vec3((0 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2));
+		glm::vec3 p3 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2));
+		glm::vec3 p4 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2));
+
+		ofSetColor(ofColor::red);
+		ofDrawSphere(p1, .1);
+		ofSetColor(ofColor::green);
+		ofDrawSphere(p2, .1);
+		ofSetColor(ofColor::blue);
+		ofDrawSphere(p3, .1);
+		ofSetColor(ofColor::purple);
+		ofDrawSphere(p4, .1);
+#endif
 	}
 
 	void updateFromUI()
@@ -186,6 +200,61 @@ public:
 		mat.diffuseColor = mat.diffuseInput;
 		mat.specularColor = mat.specularInput;
 	}
+private:
+	static int count;
+	void setupUI();
+};
+
+class Mesh : public SceneObject
+{
+public:
+	ofxAssimpModelLoader model;
+
+	Mesh(std::string name)
+	{
+		this->name = "Mesh" + std::to_string(count);
+		count++;
+
+		this->load(name);
+		model.setPosition(position.x, position.y, position.z);
+	}
+
+
+	bool intersect(const Ray &ray, IntersectInfo &intersect);
+
+	void draw()
+	{
+		for (int i = 0; i < model.getNumMeshes(); i++)
+		{
+			model.getMesh(0).drawWireframe();
+		}
+	}
+
+	bool load(std::string name)
+	{
+		bool m = model.loadModel(name);
+		model.setScale(.1, .1, .1);
+#if _DEBUG //print out model information
+		cout << model.getScale() << endl;
+		vector<std::string> names = model.getMeshNames();
+		cout << names.size() << endl;
+		for (int i = 0; i < names.size(); i++)
+		{
+			cout << names[i] << endl;
+		}
+#endif
+		return m;
+	}
+
+	void updateFromUI()
+	{
+		position = glm::vec3((float)xInput, (float)yInput, (float)zInput);
+		model.setPosition(xInput, yInput, zInput);
+		mat.p = mat.pInput;
+		mat.diffuseColor = mat.diffuseInput;
+		mat.specularColor = mat.specularInput;
+	}
+
 private:
 	static int count;
 	void setupUI();

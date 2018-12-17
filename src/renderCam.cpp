@@ -27,7 +27,9 @@ void RenderCam::drawFrustum()
 
 void RenderCam::renderImage(Scene scene, ofImage *image)
 {
+#if _DEBUG
 	std::cout << "rendering with resolution: " << image->getWidth() << " x " << image->getHeight() << "\n";
+#endif
 	for (int i = 0; i < image->getWidth(); i++)
 	{
 		for (int j = 0; j < image->getHeight(); j++)
@@ -57,7 +59,9 @@ void RenderCam::renderImage(Scene scene, ofImage *image)
 
 		}
 	}
+#if _DEBUG
 	cout << "done\n";
+#endif
 }
 
 ofColor RenderCam::lambertian(SceneObject * obj, Light * light, IntersectInfo intersect)
@@ -66,7 +70,6 @@ ofColor RenderCam::lambertian(SceneObject * obj, Light * light, IntersectInfo in
 		(light->intensity / std::pow(glm::length(light->position - intersect.point), 2)) *
 		std::max(0.0f, glm::dot(glm::normalize(intersect.normal), glm::normalize(light->position - intersect.point))) *
 		light->mat.diffuseColor;
-	//cout << col << endl;
 	return col;
 }
 
