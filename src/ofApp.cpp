@@ -65,6 +65,11 @@ void ofApp::draw()
 		ofSetColor(ofColor::blue);
 		renderCam.draw();
 
+		for (int i = 0; i < intersectPoints.size(); i++)
+		{
+			ofDrawSphere(intersectPoints[i], .05);
+		}
+
 		for (int i = 0; i < scene.objects.size(); i++)
 		{
 			if (scene.objects[i] == selected)
@@ -181,6 +186,7 @@ void ofApp::mouseReleased(int x, int y, int button)
 	else
 	{
 		selected = nullptr;
+		intersectPoints.clear();
 		//get a ray from camera position to viewport for selection
 		Ray selectRay = Ray(theCam->getPosition(), glm::normalize(theCam->screenToWorld(glm::vec3(ofGetMouseX(), ofGetMouseY(), 0)) - theCam->getPosition()));
 		float dist = std::numeric_limits<float>::max();
@@ -189,6 +195,7 @@ void ofApp::mouseReleased(int x, int y, int button)
 			IntersectInfo temp;
 			if (scene.lights[i]->intersectView(selectRay, temp))
 			{
+				intersectPoints.push_back(temp.point);
 				if (temp.dist < dist)
 				{
 					selected = scene.lights[i];
@@ -201,6 +208,7 @@ void ofApp::mouseReleased(int x, int y, int button)
 			IntersectInfo temp;
 			if (scene.objects[i]->intersectView(selectRay, temp))
 			{
+				intersectPoints.push_back(temp.point);
 				if (temp.dist < dist)
 				{
 					selected = scene.objects[i];

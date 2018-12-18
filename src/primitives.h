@@ -42,8 +42,16 @@ class SceneObject
 {
 public:
 	glm::vec3 position = glm::vec3(0, 0, 0);
+	glm::vec3 rotation = glm::vec3(0, 0, 0);
+	glm::vec3 scale = glm::vec3(0, 0, 0);
+
 	Material mat = Material(ofColor::white, ofColor::lightGrey, 10.0f);
+
 	ofxPanel settings;
+	ofxGuiGroup positionGroup;
+	ofxInputField<float> xInput;
+	ofxInputField<float> yInput;
+	ofxInputField<float> zInput;
 	std::string name;
 
 	virtual void draw() = 0;
@@ -59,14 +67,10 @@ class Sphere : public SceneObject
 public:
 	//class members
 	float radius = 1.0;
-	ofxGuiGroup positionGroup;
-	ofxInputField<float> xInput;
-	ofxInputField<float> yInput;
-	ofxInputField<float> zInput;
 
 	Sphere()
 	{
-		name = "Sphere" + count;
+		name = "Sphere" + std::to_string(count);
 		count++;
 		this->setupUI();
 		
@@ -77,7 +81,7 @@ public:
 		radius = r;
 		mat.setDiffuseColor(col);
 
-		name = "Sphere" + count;
+		name = "Sphere" + std::to_string(count);
 		count++;
 		this->setupUI();
 	}
@@ -89,7 +93,7 @@ public:
 		mat.setSpecularColor(specCol);
 		mat.setP(p);
 
-		name = "Sphere" + count;
+		name = "Sphere" + std::to_string(count);
 		count++;
 		this->setupUI();
 	}
@@ -123,10 +127,6 @@ public:
 	float height = 20;
 	glm::vec3 normal = glm::vec3(0, 1, 0);
 
-	ofxGuiGroup positionGroup;
-	ofxInputField<float> xInput;
-	ofxInputField<float> yInput;
-	ofxInputField<float> zInput;
 	ofxGuiGroup normalGroup;
 	ofxInputField<float> xNormalInput;
 	ofxInputField<float> yNormalInput;
@@ -147,7 +147,7 @@ public:
 		mat.diffuseColor = diffuse;
 		plane.rotateDeg(90, 1, 0, 0);
 
-		name = "Plane" + count;
+		name = "Plane" + std::to_string(count);
 		count++;
 		this->setupUI();
 	}
@@ -161,7 +161,7 @@ public:
 		mat.specularColor = spec;
 		plane.rotateDeg(90, 1, 0, 0);
 
-		name = "Plane" + count;
+		name = "Plane" + std::to_string(count);
 		count++;
 		this->setupUI();
 	}

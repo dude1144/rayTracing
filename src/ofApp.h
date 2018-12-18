@@ -45,6 +45,7 @@ public:
 
 	SceneObject *selected;
 	Scene scene;
+	vector<glm::vec3> intersectPoints;
 	BoundingBox bound = BoundingBox(glm::vec3(-1, 1, -1), glm::vec3(1, 1, -1), glm::vec3(-1, 1, 1), glm::vec3(1, 1, 1),
 		glm::vec3(-1, -1, -1), glm::vec3(1, -1, -1), glm::vec3(-1, -1, 1), glm::vec3(1, -1, 1));
 
