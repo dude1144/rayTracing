@@ -44,6 +44,7 @@ class SceneObject
 public:
 	glm::vec3 position = glm::vec3(0, 0, 0);
 	Material mat = Material(ofColor::white, ofColor::lightGrey, 10.0f);
+	
 	ofxPanel settings;
 	ofxGuiGroup positionGroup;
 	ofxInputField<float> xInput;
@@ -134,19 +135,8 @@ public:
 	{ 
 		name = "Plane" + count;
 		count++;
-		this->setupUI();
-	}
-	Plane(glm::vec3 p, glm::vec3 n, ofColor diffuse = ofColor::darkOliveGreen, float w = 20, float h = 20)
-	{
-		position = p; 
-		normal = n;
-		width = w;
-		height = h;
-		mat.diffuseColor = diffuse;
+		normal = glm::vec3(0, 1, 0);
 		plane.rotateDeg(90, 1, 0, 0);
-
-		name = "Plane" + count;
-		count++;
 		this->setupUI();
 	}
 	Plane(glm::vec3 pos, glm::vec3 n, ofColor diffuse = ofColor::darkOliveGreen, ofColor spec = ofColor::olive, float p = 1, float w = 20, float h = 20)
@@ -209,7 +199,7 @@ class Mesh : public SceneObject
 {
 public:
 	ofxAssimpModelLoader model;
-	bool smooth;
+	ofxToggle smooth;
 
 	Mesh(std::string name)
 	{
@@ -232,14 +222,13 @@ public:
 		for (int i = 0; i < model.getNumMeshes(); i++)
 		{
 			model.getMesh(i).drawWireframe();
-			vector<ofMeshFace> triangles = model.getMesh(i).getUniqueFaces();
+			vector<glm::vec3> verts = model.getMesh(i).getVertices();
 			ofColor current = ofGetStyle().color;
 			ofSetColor(ofColor::hotPink);
-			for (int j = 0; j < triangles.size(); j++)
+			for (int j = 0; j < verts.size(); j++)
 			{
-				ofDrawSphere(triangles[j].getVertex(0), .05);
-				ofDrawSphere(triangles[j].getVertex(1), .05);
-				ofDrawSphere(triangles[j].getVertex(2), .05);
+				ofDrawSphere(verts[j], .05);
+				ofDrawLine(verts[j], verts[j] + (model.getMesh(i).getNormals()[j] * .2));
 			}
 			ofSetColor(current);
 		}

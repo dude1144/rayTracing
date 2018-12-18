@@ -39,6 +39,7 @@ void Mesh::setupUI()
 	positionGroup.add(xInput.setup("X", position.x, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
 	positionGroup.add(yInput.setup("Y", position.y, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
 	positionGroup.add(zInput.setup("Z", position.z, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
+	settings.add(smooth.setup("Smooth Shading", false));
 	settings.add(&mat.materialGroup);
 	this->updateFromUI();
 }
@@ -114,21 +115,27 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 	IntersectInfo closest;
 	for (int i = 0; i < model.getNumMeshes(); i++)
 	{
-		vector<ofMeshFace> triangles = model.getMesh(i).getUniqueFaces();
-		for (int j = 0; j < triangles.size(); j++)
+		vector<ofIndexType> indices = model.getMesh(i).getIndices();
+
+		for (int j = 0; j < indices.size(); j += 3)
 		{
 			IntersectInfo temp;
-			glm::vec3 v1 = triangles[j].getVertex(0);
-			glm::vec3 v2 = triangles[j].getVertex(1);
-			glm::vec3 v3 = triangles[j].getVertex(2);
+			glm::vec3 v1 = model.getMesh(i).getVertices()[indices[j]];
+			glm::vec3 v2 = model.getMesh(i).getVertices()[indices[j + 1]];
+			glm::vec3 v3 = model.getMesh(i).getVertices()[indices[j + 2]];
 			if (glm::intersectRayTriangle(ray.p, ray.d, v1, v2, v3, temp.barry))
 			{
 				temp.barry.z = 1 - (temp.barry.x + temp.barry.y);
 				temp.point = (v1 * temp.barry.z) + (v2 * temp.barry.x) + (v3 * temp.barry.y);
 				temp.dist = glm::length(temp.point - ray.p);
-				temp.normal = glm::normalize(triangles[j].getFaceNormal());
 				if (temp.dist < closest.dist)
 				{
+					if (smooth)
+					{
+						temp.normal = (model.getMesh(i).getNormal(indices[j]) * temp.barry.z) + (model.getMesh(i).getNormal(indices[j + 1]) * temp.barry.x) + (model.getMesh(i).getNormal(indices[j + 2]) * temp.barry.y);
+					}
+					else
+						temp.normal = glm::normalize(glm::cross((v1 - v2), (v1 - v3)));
 					closest = temp;
 				}
 			}
@@ -148,21 +155,27 @@ bool Mesh::intersectView(const Ray &ray, IntersectInfo &intersect)
 	IntersectInfo closest;
 	for (int i = 0; i < model.getNumMeshes(); i++)
 	{
-		vector<ofMeshFace> triangles = model.getMesh(i).getUniqueFaces();
-		for (int j = 0; j < triangles.size(); j++)
+		vector<ofIndexType> indices = model.getMesh(i).getIndices();
+
+		for (int j = 0; j < indices.size(); j += 3)
 		{
 			IntersectInfo temp;
-			glm::vec3 v1 = triangles[j].getVertex(0);
-			glm::vec3 v2 = triangles[j].getVertex(1);
-			glm::vec3 v3 = triangles[j].getVertex(2);
+			glm::vec3 v1 = model.getMesh(i).getVertices()[indices[j]];
+			glm::vec3 v2 = model.getMesh(i).getVertices()[indices[j + 1]];
+			glm::vec3 v3 = model.getMesh(i).getVertices()[indices[j + 2]];
 			if (glm::intersectRayTriangle(ray.p, ray.d, v1, v2, v3, temp.barry))
 			{
 				temp.barry.z = 1 - (temp.barry.x + temp.barry.y);
 				temp.point = (v1 * temp.barry.z) + (v2 * temp.barry.x) + (v3 * temp.barry.y);
 				temp.dist = glm::length(temp.point - ray.p);
-				temp.normal = glm::normalize(triangles[j].getFaceNormal());
 				if (temp.dist < closest.dist)
 				{
+					if (smooth)
+					{
+						temp.normal = (model.getMesh(i).getNormal(indices[j]) * temp.barry.z) + (model.getMesh(i).getNormal(indices[j+1]) * temp.barry.x) + (model.getMesh(i).getNormal(indices[j+2]) * temp.barry.y);
+					}
+					else
+						temp.normal = glm::normalize(glm::cross((v1-v2), (v1-v3)));
 					closest = temp;
 				}
 			}
@@ -188,6 +201,10 @@ bool Mesh::load(std::string name)
 	for (int i = 0; i < names.size(); i++)
 	{
 		cout << names[i] << endl;
+		cout << "\tNumVerts: " << model.getMesh(i).getNumVertices() << endl;
+		cout << "\tNumFaces: " << model.getMesh(i).getUniqueFaces().size() << endl;
+		cout << "\tNumNormals: " << model.getMesh(i).getNumNormals() << endl;
+		cout << "\tNumIndices: " << model.getMesh(i).getIndices().size() << endl;
 	}
 #endif
 	return m;

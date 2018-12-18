@@ -33,10 +33,20 @@ public:
 	void dragEvent(ofDragInfo dragInfo);
 	void gotMessage(ofMessage msg);
 
+	void pressedAddSphere();
+	void pressedAddPlane();
+	void pressedAddLight();
+
 	bool showImage = false;
-	bool showGui = true;
+	bool bShowAddPanel = false;
 	bool dragged = false;
 	bool pressed = false;
+	bool moving = false;
+	bool bShiftPressed = false;
+
+	int offsetX = 0;
+	int offsetY = 0;
+	glm::vec3 initialPos;
 
 	ofEasyCam  mainCam;
 	ofCamera sideCam;
@@ -49,7 +59,12 @@ public:
 	BoundingBox bound = BoundingBox(glm::vec3(-1, 1, -1), glm::vec3(1, 1, -1), glm::vec3(-1, 1, 1), glm::vec3(1, 1, 1),
 		glm::vec3(-1, -1, -1), glm::vec3(1, -1, -1), glm::vec3(-1, -1, 1), glm::vec3(1, -1, 1));
 
-	ofxPanel *gui;
+	//ofxPanel *gui;
+
+	ofxPanel addPanel;
+	ofxButton addSphere;
+	ofxButton addPlane;
+	ofxButton addLight;
 
 #if _DEBUG // debug tools
 

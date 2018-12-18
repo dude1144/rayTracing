@@ -6,9 +6,14 @@
 //#include "sceneObject.h"
 #include "primitives.h"
 #include "scene.h"
-#include <vector>
 #include "viewPlane.h"
 #include "light.h"
+#include <vector>
+#include <iostream>
+#include <cmath>
+#include <chrono>
+#include <thread>
+#include <future>
 
 
 //  render camera  - currently must be z axis aligned (we will improve this in project 4)
@@ -46,6 +51,7 @@ public:
 private:
 	ofColor averageColors(vector<ofColor> colors);
 	ofColor getColor(Scene scene, float u, float v);
+	//void getColor(Scene scene, float u, float v, std::promise<ofColor> &&p);
 	ofColor lambertian(SceneObject *obj, Light *light, IntersectInfo intersect);       //calculate lambertian color
 	ofColor blinn_phong(SceneObject *obj, Light *light, IntersectInfo intersect);      //calculate Blinn-Phong color
 	bool inShadow(vector<SceneObject*> objects, Light *light, IntersectInfo intersect);//determine if point is in a shadow

@@ -5,19 +5,27 @@
 //--------------------------------------------------------------
 void ofApp::setup() 
 {
-	/*
-	scene.add(new Sphere(glm::vec3(0, 0, 0), 1, ofColor(74, 219, 94), ofColor::gray, 20));
-	scene.add(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor(255,65,65), ofColor::gray, 20));
-	scene.add(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor(65, 142, 255), ofColor::gray, 20));*/
-	scene.add(new PointLight(glm::vec3(2, 3, 2), 10, ofColor(255,255,255)));
 	scene.add(new Plane(glm::vec3(0, -1.6, 0), glm::vec3(0, 1, 0), ofColor::lightGray, ofColor::gray, 20));
+	/*scene.add(new Sphere(glm::vec3(0, 0, 0), 1, ofColor(74, 219, 94), ofColor::gray, 20));
+	scene.add(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor(255,65,65), ofColor::gray, 20));
+	scene.add(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor(65, 142, 255), ofColor::gray, 20));
+	scene.add(new PointLight(glm::vec3(2, 3, 2), 10, ofColor(255,255,255)));*/
 	scene.add(new PointLight(glm::vec3(-4, 2, 4), 10, ofColor(255, 255, 255)));
 	
 	//image.allocate(1200, 800, OF_IMAGE_COLOR_ALPHA);
-	image.allocate(600, 400, OF_IMAGE_COLOR_ALPHA);
-	//image.allocate(120, 80, OF_IMAGE_COLOR_ALPHA);
+	//image.allocate(600, 400, OF_IMAGE_COLOR_ALPHA);
+	image.allocate(120, 80, OF_IMAGE_COLOR_ALPHA);
 	//image.allocate(60, 40, OF_IMAGE_COLOR_ALPHA);
 	//image.allocate(6, 4, OF_IMAGE_COLOR_ALPHA);
+
+	addPanel.setup("ADD");
+	addPanel.add(addSphere.setup("Add Sphere"));
+	addPanel.add(addPlane.setup("Add Plane"));
+	addPanel.add(addLight.setup("Add Light"));
+	
+	addSphere.addListener(this, &ofApp::pressedAddSphere);
+	addPlane.addListener(this, &ofApp::pressedAddPlane);
+	addLight.addListener(this, &ofApp::pressedAddLight);
 
 #if _DEBUG // setup debug panel
 	debugPanel.setup("DEBUG", "settings.xml");
@@ -111,41 +119,59 @@ void ofApp::draw()
 		}
 #endif
 
-		if (selected && showGui)
+		if (selected)
 		{
 			ofDisableDepthTest();
 			selected->settings.draw();
+		}
+		if (bShowAddPanel)
+		{
+			ofDisableDepthTest();
+			addPanel.draw();
 		}
 	}
 }
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key) 
 {
-
+	switch (key)
+	{
+	case 'A':
+	case 'a':
+		if (bShiftPressed && !moving)
+		{
+			addPanel.setPosition(ofGetMouseX(), ofGetMouseY());
+			bShowAddPanel = true;
+		}
+		break;
+	case 'G':
+	case 'g':
+		break;
+	case OF_KEY_SHIFT:
+		bShiftPressed = true;
+		break;
+	}
 }
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key) 
 {
 	switch (key) 
 	{
-	case 'T':
-	case 't':
-	{
-		glm::vec3 barry = glm::vec3(0,0,0);
-
-		glm::intersectRayTriangle(glm::vec3(0, 1, 0), glm::vec3(0, -1, 0), glm::vec3(1, 1, 1), glm::vec3(-1, 0, 1), glm::vec3(-1, 0, -1), barry);
-		barry.z = 1 - (barry.x + barry.y);
-		glm::vec3 point = (glm::vec3(-1, 0, 1) * barry.x) + (glm::vec3(-1, 0, -1) * barry.y)+ (glm::vec3(1, 1, 1) * barry.z);
-		cout << barry << ", " <<point << endl;
-
+	case 'L':
+	case 'l':
+		pressedAddLight();
 		break;
-	}
+	case 'S':
+	case 's':
+		pressedAddSphere();
+		break;
+	case 'P':
+	case 'p':
+		pressedAddPlane();
+		break;
 	case 'I':
 	case 'i':
 		showImage = !showImage;
-		break;
-	case 'Z':
-	case 'z':
 		break;
 	case 'R':
 	case 'r':
@@ -153,15 +179,25 @@ void ofApp::keyReleased(int key)
 		image.save("render.png", OF_IMAGE_QUALITY_BEST);
 		image.load("render.png");
 		break;
-	case 'G':
-	case 'g':
-		showGui = !showGui;
+	case 'X':
+	case 'x':
+		if (moving)
+		{
+
+		}
+		else
+		{
+			if (selected)
+			{
+				if (scene.remove(selected))
+				{
+					selected = nullptr;
+				}
+			}
+		}
 		break;
-	case 'f':
-		ofToggleFullscreen();
-		break;
-	case 'h':
-		//bHide = !bHide;
+	case OF_KEY_SHIFT:
+		bShiftPressed = false;
 		break;
 	case OF_KEY_F1:
 		theCam = &mainCam;
@@ -185,21 +221,46 @@ void ofApp::mouseMoved(int x, int y)
 void ofApp::mouseDragged(int x, int y, int button) 
 {
 	dragged = true;
+	if (selected && moving)
+	{
+#if _DEBUG
+		cout << "moving" << endl;
+#endif
+		mainCam.disableMouseInput();
+		Ray selectRay = Ray(theCam->getPosition(), glm::normalize(theCam->screenToWorld(glm::vec3(ofGetMouseX(), ofGetMouseY(), 0)) - theCam->getPosition()));
+		IntersectInfo temp;
+		Plane(initialPos, theCam->getLookAtDir()*-1).intersect(selectRay, temp);
+		selected->position = temp.point;
+		selected->xInput = temp.point.x;
+		selected->yInput = temp.point.y;
+		selected->zInput = temp.point.z;
+	}
 }
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button) 
 {
+
 	pressed = true;
 
 	if (selected)
 	{
+
 		if (selected->settings.getShape().inside(x, y))
 		{
 			mainCam.disableMouseInput();
 		}
+		else
+		{
+			Ray selectRay = Ray(theCam->getPosition(), glm::normalize(theCam->screenToWorld(glm::vec3(ofGetMouseX(), ofGetMouseY(), 0)) - theCam->getPosition()));
+			if (selected->intersectView(selectRay, IntersectInfo()))
+			{
+				initialPos = selected->position;
+				moving = true;
+			}
+		}
 	}
 #if _DEBUG // check if mouse is on debug panel
-	else if (showDebugPanel)
+	if (showDebugPanel)
 	{
 		if (debugPanel.getShape().inside(x, y))
 		{
@@ -212,6 +273,8 @@ void ofApp::mousePressed(int x, int y, int button)
 void ofApp::mouseReleased(int x, int y, int button) 
 {
 	pressed = false;
+	moving = false;
+	bShowAddPanel = false;
 
 	if (!mainCam.getMouseInputEnabled())
 		mainCam.enableMouseInput();
@@ -220,6 +283,7 @@ void ofApp::mouseReleased(int x, int y, int button)
 	else
 	{
 		selected = nullptr;
+		dragged = false;
 		//get a ray from camera position to viewport for selection
 		Ray selectRay = Ray(theCam->getPosition(), glm::normalize(theCam->screenToWorld(glm::vec3(ofGetMouseX(), ofGetMouseY(), 0)) - theCam->getPosition()));
 		float dist = std::numeric_limits<float>::max();
@@ -274,4 +338,23 @@ void ofApp::gotMessage(ofMessage msg) {
 void ofApp::dragEvent(ofDragInfo dragInfo) 
 {
 	scene.add(new Mesh(dragInfo.files[0]));
+}
+
+void ofApp::pressedAddSphere()
+{
+	scene.add(new Sphere());
+	bShowAddPanel = false;
+	mainCam.enableMouseInput();
+}
+void ofApp::pressedAddPlane()
+{
+	scene.add(new Plane());
+	bShowAddPanel = false;
+	mainCam.enableMouseInput();
+}
+void ofApp::pressedAddLight()
+{
+	scene.add(new PointLight());
+	bShowAddPanel = false;
+	mainCam.enableMouseInput();
 }

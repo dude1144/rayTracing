@@ -2,9 +2,6 @@
 //010640955
 //from code given by professor
 #include "renderCam.h"
-#include <iostream>
-#include <cmath>
-#include <chrono>
 
 Ray RenderCam::getRay(float u, float v)
 {
@@ -48,10 +45,9 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias)
 						float v = (j + b) / image->getHeight();
 
 						colors.push_back(getColor(scene, u, v));
-
-						image->setColor(i, (image->getHeight() - j) - 1, averageColors(colors));
 					}
 				}
+				image->setColor(i, (image->getHeight() - j) - 1, averageColors(colors));
 			}
 			else
 			{
@@ -70,6 +66,7 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias)
 	cout << "done, rendered in " << std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / (float)1000000000 << " seconds" << endl;
 #endif
 }
+
 
 ofColor RenderCam::getColor(Scene scene, float u, float v)
 {
