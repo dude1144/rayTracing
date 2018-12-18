@@ -217,11 +217,38 @@ public:
 	bool intersect(const Ray &ray, IntersectInfo &intersect);
 	bool intersectView(const Ray &ray, IntersectInfo &intersect);
 
+	glm::mat4 getRotateMatrix() 
+	{
+		return (glm::eulerAngleYXZ(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)));
+	}
+	glm::mat4 getTranslateMatrix() 
+	{
+		return (glm::translate(glm::mat4(1.0), glm::vec3(position.x, position.y, position.z)));
+	}
+	glm::mat4 getScaleMatrix() 
+	{
+		return (glm::scale(glm::mat4(1.0), glm::vec3(1, 1, 1)));
+	}
+
+	glm::mat4 getMatrix() 
+	{
+		glm::mat4 scale = getScaleMatrix();
+		glm::mat4 rotate = getRotateMatrix();
+		glm::mat4 trans = getTranslateMatrix();
+
+		return (trans * rotate * scale);
+
+	}
+
 	void draw()
 	{
+		ofPushMatrix();
+		ofMultMatrix(getMatrix());
+
 		for (int i = 0; i < model.getNumMeshes(); i++)
 		{
 			model.getMesh(i).drawWireframe();
+#if _DEBUG
 			vector<glm::vec3> verts = model.getMesh(i).getVertices();
 			ofColor current = ofGetStyle().color;
 			ofSetColor(ofColor::hotPink);
@@ -231,6 +258,8 @@ public:
 				ofDrawLine(verts[j], verts[j] + (model.getMesh(i).getNormals()[j] * .2));
 			}
 			ofSetColor(current);
+#endif
+			ofPopMatrix();
 		}
 
 	}

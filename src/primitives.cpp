@@ -120,9 +120,10 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 		for (int j = 0; j < indices.size(); j += 3)
 		{
 			IntersectInfo temp;
-			glm::vec3 v1 = model.getMesh(i).getVertices()[indices[j]];
-			glm::vec3 v2 = model.getMesh(i).getVertices()[indices[j + 1]];
-			glm::vec3 v3 = model.getMesh(i).getVertices()[indices[j + 2]];
+			glm::mat4 m = getMatrix();
+			glm::vec3 v1 = m * glm::vec4(model.getMesh(i).getVertices()[indices[j]], 1);
+			glm::vec3 v2 = m * glm::vec4(model.getMesh(i).getVertices()[indices[j + 1]], 1);
+			glm::vec3 v3 = m * glm::vec4(model.getMesh(i).getVertices()[indices[j + 2]], 1);
 			if (glm::intersectRayTriangle(ray.p, ray.d, v1, v2, v3, temp.barry))
 			{
 				temp.barry.z = 1 - (temp.barry.x + temp.barry.y);
@@ -160,9 +161,10 @@ bool Mesh::intersectView(const Ray &ray, IntersectInfo &intersect)
 		for (int j = 0; j < indices.size(); j += 3)
 		{
 			IntersectInfo temp;
-			glm::vec3 v1 = model.getMesh(i).getVertices()[indices[j]];
-			glm::vec3 v2 = model.getMesh(i).getVertices()[indices[j + 1]];
-			glm::vec3 v3 = model.getMesh(i).getVertices()[indices[j + 2]];
+			glm::mat4 m = getMatrix();
+			glm::vec3 v1 = m * glm::vec4(model.getMesh(i).getVertices()[indices[j]], 1);
+			glm::vec3 v2 = m * glm::vec4(model.getMesh(i).getVertices()[indices[j + 1]], 1);
+			glm::vec3 v3 = m * glm::vec4(model.getMesh(i).getVertices()[indices[j + 2]], 1);
 			if (glm::intersectRayTriangle(ray.p, ray.d, v1, v2, v3, temp.barry))
 			{
 				temp.barry.z = 1 - (temp.barry.x + temp.barry.y);
@@ -172,10 +174,10 @@ bool Mesh::intersectView(const Ray &ray, IntersectInfo &intersect)
 				{
 					if (smooth)
 					{
-						temp.normal = (model.getMesh(i).getNormal(indices[j]) * temp.barry.z) + (model.getMesh(i).getNormal(indices[j+1]) * temp.barry.x) + (model.getMesh(i).getNormal(indices[j+2]) * temp.barry.y);
+						temp.normal = (model.getMesh(i).getNormal(indices[j]) * temp.barry.z) + (model.getMesh(i).getNormal(indices[j + 1]) * temp.barry.x) + (model.getMesh(i).getNormal(indices[j + 2]) * temp.barry.y);
 					}
 					else
-						temp.normal = glm::normalize(glm::cross((v1-v2), (v1-v3)));
+						temp.normal = glm::normalize(glm::cross((v1 - v2), (v1 - v3)));
 					closest = temp;
 				}
 			}
