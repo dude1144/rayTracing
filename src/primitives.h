@@ -209,42 +209,44 @@ class Mesh : public SceneObject
 {
 public:
 	ofxAssimpModelLoader model;
+	bool smooth;
 
 	Mesh(std::string name)
 	{
 		this->name = "Mesh" + std::to_string(count);
 		count++;
+		smooth = false;
 
 		this->load(name);
-		model.setPosition(position.x, position.y, position.z);
+		//model.setPosition(position.x, position.y, position.z);
+		model.setPosition(1, 1, 1);
+		this->setupUI();
 	}
 
 
 	bool intersect(const Ray &ray, IntersectInfo &intersect);
+	bool intersectView(const Ray &ray, IntersectInfo &intersect);
 
 	void draw()
 	{
 		for (int i = 0; i < model.getNumMeshes(); i++)
 		{
-			model.getMesh(0).drawWireframe();
+			model.getMesh(i).drawWireframe();
+			vector<ofMeshFace> triangles = model.getMesh(i).getUniqueFaces();
+			ofColor current = ofGetStyle().color;
+			ofSetColor(ofColor::hotPink);
+			for (int j = 0; j < triangles.size(); j++)
+			{
+				ofDrawSphere(triangles[j].getVertex(0), .05);
+				ofDrawSphere(triangles[j].getVertex(1), .05);
+				ofDrawSphere(triangles[j].getVertex(2), .05);
+			}
+			ofSetColor(current);
 		}
+
 	}
 
-	bool load(std::string name)
-	{
-		bool m = model.loadModel(name);
-		model.setScale(.1, .1, .1);
-#if _DEBUG //print out model information
-		cout << model.getScale() << endl;
-		vector<std::string> names = model.getMeshNames();
-		cout << names.size() << endl;
-		for (int i = 0; i < names.size(); i++)
-		{
-			cout << names[i] << endl;
-		}
-#endif
-		return m;
-	}
+	bool load(std::string name);
 
 	void updateFromUI()
 	{

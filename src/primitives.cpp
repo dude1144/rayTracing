@@ -76,7 +76,7 @@ bool Plane::intersect(const Ray &ray, IntersectInfo &intersect)
 	{
 		Ray r = ray;
 		intersect.point = r.evalPoint(intersect.dist);
-		intersect.normal = this->normal;
+		intersect.normal = glm::normalize(this->normal);
 
 		return true;
 	}
@@ -95,7 +95,7 @@ bool Plane::intersectView(const Ray &ray, IntersectInfo &intersect)
 		intersect.barry.z = 1 - (intersect.barry.x + intersect.barry.y);
 		intersect.point = (p1 * intersect.barry.z) + (p2 * intersect.barry.x) + (p3 * intersect.barry.y);
 		intersect.dist = glm::length(intersect.point - ray.p);
-		intersect.normal = this->normal;
+		intersect.normal = glm::normalize(this->normal);
 		return true;
 	}
 	else if ( intersectRayTriangle(ray.p, ray.d, p1, p3, p4, intersect.barry) )
@@ -103,7 +103,7 @@ bool Plane::intersectView(const Ray &ray, IntersectInfo &intersect)
 		intersect.barry.z = 1 - (intersect.barry.x + intersect.barry.y);
 		intersect.point = (p1 * intersect.barry.z) + (p3 * intersect.barry.x) + (p4 * intersect.barry.y);
 		intersect.dist = glm::length(intersect.point - ray.p);
-		intersect.normal = this->normal;
+		intersect.normal = glm::normalize(this->normal);
 		return true;
 	}
 	return false;
@@ -111,5 +111,84 @@ bool Plane::intersectView(const Ray &ray, IntersectInfo &intersect)
 
 bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 {
-	return false;
+	IntersectInfo closest;
+	for (int i = 0; i < model.getNumMeshes(); i++)
+	{
+		vector<ofMeshFace> triangles = model.getMesh(i).getUniqueFaces();
+		for (int j = 0; j < triangles.size(); j++)
+		{
+			IntersectInfo temp;
+			glm::vec3 v1 = triangles[j].getVertex(0);
+			glm::vec3 v2 = triangles[j].getVertex(1);
+			glm::vec3 v3 = triangles[j].getVertex(2);
+			if (glm::intersectRayTriangle(ray.p, ray.d, v1, v2, v3, temp.barry))
+			{
+				temp.barry.z = 1 - (temp.barry.x + temp.barry.y);
+				temp.point = (v1 * temp.barry.z) + (v2 * temp.barry.x) + (v3 * temp.barry.y);
+				temp.dist = glm::length(temp.point - ray.p);
+				temp.normal = glm::normalize(triangles[j].getFaceNormal());
+				if (temp.dist < closest.dist)
+				{
+					closest = temp;
+				}
+			}
+		}
+	}
+	if (closest.dist < std::numeric_limits<float>::max())
+	{
+		intersect = closest;
+		return true;
+	}
+	else
+		return false;
+}
+
+bool Mesh::intersectView(const Ray &ray, IntersectInfo &intersect)
+{
+	IntersectInfo closest;
+	for (int i = 0; i < model.getNumMeshes(); i++)
+	{
+		vector<ofMeshFace> triangles = model.getMesh(i).getUniqueFaces();
+		for (int j = 0; j < triangles.size(); j++)
+		{
+			IntersectInfo temp;
+			glm::vec3 v1 = triangles[j].getVertex(0);
+			glm::vec3 v2 = triangles[j].getVertex(1);
+			glm::vec3 v3 = triangles[j].getVertex(2);
+			if (glm::intersectRayTriangle(ray.p, ray.d, v1, v2, v3, temp.barry))
+			{
+				temp.barry.z = 1 - (temp.barry.x + temp.barry.y);
+				temp.point = (v1 * temp.barry.z) + (v2 * temp.barry.x) + (v3 * temp.barry.y);
+				temp.dist = glm::length(temp.point - ray.p);
+				temp.normal = glm::normalize(triangles[j].getFaceNormal());
+				if (temp.dist < closest.dist)
+				{
+					closest = temp;
+				}
+			}
+		}
+	}
+	if (closest.dist < std::numeric_limits<float>::max())
+	{
+		intersect = closest;
+		return true;
+	}
+	else
+		return false;
+}
+
+bool Mesh::load(std::string name)
+{
+	bool m = model.loadModel(name);
+	model.setScale(.1, .1, .1);
+#if _DEBUG //print out model information
+	cout << model.getScale() << endl;
+	vector<std::string> names = model.getMeshNames();
+	cout << names.size() << endl;
+	for (int i = 0; i < names.size(); i++)
+	{
+		cout << names[i] << endl;
+	}
+#endif
+	return m;
 }

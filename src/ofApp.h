@@ -57,8 +57,10 @@ public:
 	bool showDebugPanel;
 
 	ofxToggle showIntersectionPoints;
+	ofxToggle showIntersectionNormals;
+	ofxToggle useAntiAliasing;
 
-	vector<glm::vec3> intersectionPoints;
+	vector<IntersectInfo> intersections;
 #endif
 
 	// set up one render camera to render image throughn

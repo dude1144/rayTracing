@@ -18,5 +18,14 @@ public:
 		lights.push_back(light);
 	}
 
+	bool remove(SceneObject* obj)
+	{
+		return false;
+	}
+	bool remove(Light* light)
+	{
+		return false;
+	}
+
 	SceneObject* intersect(const Ray &ray, IntersectInfo &intersect);
 };
