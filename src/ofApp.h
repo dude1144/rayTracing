@@ -74,6 +74,7 @@ public:
 	ofxToggle showIntersectionPoints;
 	ofxToggle showIntersectionNormals;
 	ofxToggle useAntiAliasing;
+	ofxToggle useMultithreading;
 
 	vector<IntersectInfo> intersections;
 #endif

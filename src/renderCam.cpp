@@ -3,6 +3,8 @@
 //from code given by professor
 #include "renderCam.h"
 
+
+
 Ray RenderCam::getRay(float u, float v)
 {
 	glm::vec3 pointOnPlane = view.toWorld(u, v);
@@ -23,13 +25,146 @@ void RenderCam::drawFrustum()
 	r4.draw(dist);
 }
 
-void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias)
+void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias = false, bool multiThread = false)
 {
 #if _DEBUG
 	std::cout << "rendering with resolution: " << image->getWidth() << " x " << image->getHeight() << "\n";
 	std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 #endif
+	if (multiThread)
+	{
+		int subWidth = image->getWidth() / 4;
+		int subHeight = image->getHeight() / 4;
+		int leftoverWidth = image->getWidth() - (subWidth * 4);
+		int leftoverHeight = image->getHeight() - (subHeight * 4);
+		count = 0;
 
+		vector<ofImage*> images;
+		vector<std::thread> threads;
+
+		for (int i = 0; i < ceil(image->getWidth() / subWidth); i++)
+		{
+			for (int j = 0; j < ceil(image->getHeight() / subHeight); j++)
+			{
+				images.push_back(new ofImage());
+
+				if (leftoverWidth > 0 && leftoverHeight > 0)
+				{
+					if (j == 0)
+						if (i == ceil(image->getWidth() / subWidth) - 1)
+						{
+							images[images.size() - 1]->allocate(leftoverWidth, leftoverHeight, OF_IMAGE_COLOR_ALPHA);
+							threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
+						}
+						else
+						{
+							images[images.size() - 1]->allocate(subWidth, leftoverHeight, OF_IMAGE_COLOR_ALPHA);	
+							threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
+						}
+					else
+						if (i == ceil(image->getWidth() / subWidth) - 1)
+						{
+							images[images.size() - 1]->allocate(leftoverWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
+							threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
+						}
+						else
+						{
+							images[images.size() - 1]->allocate(subWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
+							threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
+						}
+				}
+				else if (leftoverWidth > 0 && leftoverHeight == 0)
+				{
+					if (i == ceil(image->getWidth() / subWidth) - 1)
+					{
+						images[images.size() - 1]->allocate(leftoverWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
+						threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
+					}
+					else
+					{
+						images[images.size() - 1]->allocate(subWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
+						threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
+					}
+				}
+				else if (leftoverWidth == 0 && leftoverHeight > 0)
+				{
+					if (j == 0)
+					{
+						images[images.size() - 1]->allocate(subWidth, leftoverHeight, OF_IMAGE_COLOR_ALPHA);
+						threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
+					}
+					else
+					{
+						images[images.size() - 1]->allocate(subWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
+						threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
+					}
+				}
+				else
+				{
+					images[images.size() - 1]->allocate(subWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
+					threads.push_back(std::thread(&RenderCam::RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
+				}
+			}
+		}
+
+		for (int i = 0; i < threads.size(); i++)
+			threads[i].join();
+
+
+		for (int i = 0; i < image->getWidth(); i++)
+		{
+			for (int j = 0; j < image->getHeight(); j++)
+			{
+				int x = (i / subWidth) + (ceil(image->getHeight() / subHeight) - 1 - (j / subHeight));
+
+				image->setColor(i, j, images[x]->getColor(images[x]->getWidth() - ((int)(i/subWidth)* subWidth), images[x]->getHeight() - ((int)(j / subHeight)* subHeight)));
+			}
+		}
+
+
+	}
+	else
+	{
+		for (int i = 0; i < image->getWidth(); i++)
+		{
+			for (int j = 0; j < image->getHeight(); j++)
+			{
+				if (antiAlias)
+				{
+					vector<ofColor> colors;
+					for (float a = 0; a <= 1; a += .5)
+					{
+						for (float b = 0; b <= 1; b += .5)
+						{
+							float u = (i + a) / image->getWidth();
+							float v = (j + b) / image->getHeight();
+
+							colors.push_back(getColor(scene, u, v));
+						}
+					}
+					image->setColor(i, (image->getHeight() - j) - 1, averageColors(colors));
+				}
+				else
+				{
+					float u = (i + .5) / image->getWidth();
+					float v = (j + .5) / image->getHeight();
+
+					ofColor col = this->getColor(scene, u, v);
+
+					image->setColor(i, (image->getHeight() - j) - 1, col);
+				}
+			}
+		}
+	}
+
+#if _DEBUG
+	std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
+	cout << "done, rendered in " << std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / (float)1000000000 << " seconds" << endl;
+#endif
+}
+
+void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, int startHeight, bool antiAlias)
+{
 	for (int i = 0; i < image->getWidth(); i++)
 	{
 		for (int j = 0; j < image->getHeight(); j++)
@@ -41,8 +176,8 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias)
 				{
 					for (float b = 0; b <= 1; b += .5)
 					{
-						float u = (i + a) / image->getWidth();
-						float v = (j + b) / image->getHeight();
+						float u = startWidth + ((i + a) / image->getWidth());
+						float v = startHeight + ((j + b) / image->getHeight());
 
 						colors.push_back(getColor(scene, u, v));
 					}
@@ -51,8 +186,8 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias)
 			}
 			else
 			{
-				float u = (i + .5) / image->getWidth();
-				float v = (j + .5) / image->getHeight();
+				float u = startWidth + (i + .5/ image->getWidth());
+				float v = startHeight + (j + .5/ image->getHeight());
 
 				ofColor col = this->getColor(scene, u, v);
 
@@ -61,10 +196,8 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias)
 		}
 	}
 
-#if _DEBUG
-	std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
-	cout << "done, rendered in " << std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / (float)1000000000 << " seconds" << endl;
-#endif
+	image->save("piece" + std::to_string(count) + ".png", OF_IMAGE_QUALITY_BEST);
+	count++;
 }
 
 

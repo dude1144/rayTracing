@@ -32,9 +32,10 @@ void ofApp::setup()
 	debugPanel.add(showIntersectionPoints.setup("Show Intersect Points", false));
 	debugPanel.add(showIntersectionNormals.setup("Show Intersect Norms", false));
 	debugPanel.add(useAntiAliasing.setup("Use Antialiasing", false));
+	debugPanel.add(useMultithreading.setup("Use Multithreading", false));
 #endif
 
-	ofSetBackgroundColor(ofColor::black);
+	ofSetBackgroundColor(ofColor(50,50,50));
 	mainCam.setDistance(30);
 	mainCam.setNearClip(.1);
 	sideCam.setPosition(40, 0, 0);
@@ -175,7 +176,11 @@ void ofApp::keyReleased(int key)
 		break;
 	case 'R':
 	case 'r':
-		renderCam.renderImage(scene, &image, true);
+#if _DEBUG
+		renderCam.renderImage(scene, &image, useAntiAliasing, useMultithreading);
+#else
+		renderCam.renderImage(scene, &image, true, false);
+#endif
 		image.save("render.png", OF_IMAGE_QUALITY_BEST);
 		image.load("render.png");
 		break;

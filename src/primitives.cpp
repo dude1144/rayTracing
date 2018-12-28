@@ -127,13 +127,15 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 		for (int j = 0; j < indices.size(); j += 3)
 		{
 			IntersectInfo temp;
+
 			glm::vec3 v1 = model.getMesh(i).getVertices()[indices[j]];
 			glm::vec3 v2 = model.getMesh(i).getVertices()[indices[j + 1]];
 			glm::vec3 v3 = model.getMesh(i).getVertices()[indices[j + 2]];
+
 			if (glm::intersectRayTriangle(p, d, v1, v2, v3, temp.barry))
 			{
 				temp.barry.z = 1 - (temp.barry.x + temp.barry.y);
-				temp.point = getMatrix() * glm::vec4((v1 * temp.barry.z) + (v2 * temp.barry.x) + (v3 * temp.barry.y), 1.0);
+				temp.point = (v1 * temp.barry.z) + (v2 * temp.barry.x) + (v3 * temp.barry.y);
 				temp.dist = glm::length(temp.point - p);
 				if (temp.dist < closest.dist)
 				{
@@ -151,6 +153,7 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 	if (closest.dist < std::numeric_limits<float>::max())
 	{
 		intersect = closest;
+		intersect.point = getMatrix() * glm::vec4(intersect.point, 1.0);
 		return true;
 	}
 	else
@@ -159,48 +162,7 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 
 bool Mesh::intersectView(const Ray &ray, IntersectInfo &intersect)
 {
-	IntersectInfo closest;
-
-	glm::mat4 mInv = glm::inverse(getMatrix());
-	glm::vec3 p = mInv * glm::vec4(ray.p, 1.0);
-	glm::vec3 p1 = mInv * glm::vec4(ray.p + ray.d, 1.0);
-	glm::vec3 d = glm::normalize(p1 - p);
-
-	for (int i = 0; i < model.getNumMeshes(); i++)
-	{
-		vector<ofIndexType> indices = model.getMesh(i).getIndices();
-
-		for (int j = 0; j < indices.size(); j += 3)
-		{
-			IntersectInfo temp;
-			glm::vec3 v1 = model.getMesh(i).getVertices()[indices[j]];
-			glm::vec3 v2 = model.getMesh(i).getVertices()[indices[j + 1]];
-			glm::vec3 v3 = model.getMesh(i).getVertices()[indices[j + 2]];
-			if (glm::intersectRayTriangle(p, d, v1, v2, v3, temp.barry))
-			{
-				temp.barry.z = 1 - (temp.barry.x + temp.barry.y);
-				temp.point = getMatrix() * glm::vec4((v1 * temp.barry.z) + (v2 * temp.barry.x) + (v3 * temp.barry.y),1.0);
-				temp.dist = glm::length(temp.point - p);
-				if (temp.dist < closest.dist)
-				{
-					if (smooth)
-					{
-						temp.normal = (model.getMesh(i).getNormal(indices[j]) * temp.barry.z) + (model.getMesh(i).getNormal(indices[j + 1]) * temp.barry.x) + (model.getMesh(i).getNormal(indices[j + 2]) * temp.barry.y);
-					}
-					else
-						temp.normal = glm::normalize(glm::cross((v1 - v2), (v1 - v3)));
-					closest = temp;
-				}
-			}
-		}
-	}
-	if (closest.dist < std::numeric_limits<float>::max())
-	{
-		intersect = closest;
-		return true;
-	}
-	else
-		return false;
+	return this->intersect(ray, intersect);
 }
 
 bool Mesh::load(std::string name)
