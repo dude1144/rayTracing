@@ -33,96 +33,28 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias = false,
 #endif
 	if (multiThread)
 	{
-		int subWidth = image->getWidth() / 4;
-		int subHeight = image->getHeight() / 4;
-		int leftoverWidth = image->getWidth() - (subWidth * 4);
-		int leftoverHeight = image->getHeight() - (subHeight * 4);
-		count = 0;
-
-		vector<ofImage*> images;
 		vector<std::thread> threads;
-
-		for (int i = 0; i < ceil(image->getWidth() / subWidth); i++)
+		for (int i = 0; i < image->getWidth(); i += image->getWidth()/numDivisions)
 		{
-			for (int j = 0; j < ceil(image->getHeight() / subHeight); j++)
+			for (int j = 0; j < image->getHeight(); j += image->getHeight()/numDivisions)
 			{
-				images.push_back(new ofImage());
+				int endWidth = i + (image->getWidth() / numDivisions);
+				int endHeight = j + (image->getHeight() / numDivisions);
+				if (endWidth > image->getWidth())
+					endWidth = endWidth > image->getWidth();
+				if (endHeight > image->getHeight())
+					endHeight = image->getHeight();
 
-				if (leftoverWidth > 0 && leftoverHeight > 0)
-				{
-					if (j == 0)
-						if (i == ceil(image->getWidth() / subWidth) - 1)
-						{
-							images[images.size() - 1]->allocate(leftoverWidth, leftoverHeight, OF_IMAGE_COLOR_ALPHA);
-							threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
-						}
-						else
-						{
-							images[images.size() - 1]->allocate(subWidth, leftoverHeight, OF_IMAGE_COLOR_ALPHA);	
-							threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
-						}
-					else
-						if (i == ceil(image->getWidth() / subWidth) - 1)
-						{
-							images[images.size() - 1]->allocate(leftoverWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
-							threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
-						}
-						else
-						{
-							images[images.size() - 1]->allocate(subWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
-							threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
-						}
-				}
-				else if (leftoverWidth > 0 && leftoverHeight == 0)
-				{
-					if (i == ceil(image->getWidth() / subWidth) - 1)
-					{
-						images[images.size() - 1]->allocate(leftoverWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
-						threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
-					}
-					else
-					{
-						images[images.size() - 1]->allocate(subWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
-						threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
-					}
-				}
-				else if (leftoverWidth == 0 && leftoverHeight > 0)
-				{
-					if (j == 0)
-					{
-						images[images.size() - 1]->allocate(subWidth, leftoverHeight, OF_IMAGE_COLOR_ALPHA);
-						threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
-					}
-					else
-					{
-						images[images.size() - 1]->allocate(subWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
-						threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
-					}
-				}
-				else
-				{
-					images[images.size() - 1]->allocate(subWidth, subHeight, OF_IMAGE_COLOR_ALPHA);
-					threads.push_back(std::thread(&RenderCam::RenderCam::renderImagePiece, this, scene, images[images.size() - 1], i * subWidth, j * subHeight, antiAlias));
-				}
+				threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, image, i, j, endWidth, endHeight, antiAlias));
+
 			}
 		}
-
 		for (int i = 0; i < threads.size(); i++)
-			threads[i].join();
-
-
-		for (int i = 0; i < image->getWidth(); i++)
 		{
-			for (int j = 0; j < image->getHeight(); j++)
-			{
-				int x = (i / subWidth) + (ceil(image->getHeight() / subHeight) - 1 - (j / subHeight));
-
-				image->setColor(i, j, images[x]->getColor(images[x]->getWidth() - ((int)(i/subWidth)* subWidth), images[x]->getHeight() - ((int)(j / subHeight)* subHeight)));
-			}
+			threads[i].join();
 		}
-
-
 	}
+
 	else
 	{
 		for (int i = 0; i < image->getWidth(); i++)
@@ -163,11 +95,11 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias = false,
 #endif
 }
 
-void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, int startHeight, bool antiAlias)
+void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, int startHeight, int endWidth, int endHeight, bool antiAlias)
 {
-	for (int i = 0; i < image->getWidth(); i++)
+	for (int i = startWidth; i < endWidth; i++)
 	{
-		for (int j = 0; j < image->getHeight(); j++)
+		for (int j = startHeight; j < endHeight; j++)
 		{
 			if (antiAlias)
 			{
@@ -176,8 +108,8 @@ void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, in
 				{
 					for (float b = 0; b <= 1; b += .5)
 					{
-						float u = startWidth + ((i + a) / image->getWidth());
-						float v = startHeight + ((j + b) / image->getHeight());
+						float u = ((i + a) / image->getWidth());
+						float v = ((j + b) / image->getHeight());
 
 						colors.push_back(getColor(scene, u, v));
 					}
@@ -186,8 +118,8 @@ void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, in
 			}
 			else
 			{
-				float u = startWidth + (i + .5/ image->getWidth());
-				float v = startHeight + (j + .5/ image->getHeight());
+				float u = (i + .5) / image->getWidth();
+				float v = (j + .5) / image->getHeight();
 
 				ofColor col = this->getColor(scene, u, v);
 
@@ -195,9 +127,6 @@ void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, in
 			}
 		}
 	}
-
-	image->save("piece" + std::to_string(count) + ".png", OF_IMAGE_QUALITY_BEST);
-	count++;
 }
 
 
