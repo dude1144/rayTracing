@@ -33,6 +33,8 @@ void ofApp::setup()
 	debugPanel.add(showIntersectionNormals.setup("Show Intersect Norms", false));
 	debugPanel.add(useAntiAliasing.setup("Use Antialiasing", false));
 	debugPanel.add(useMultithreading.setup("Use Multithreading", false));
+	debugPanel.add(numImageDivisions.setup("Num Divisions", 2, 1, 8));
+	debugPanel.add(threadPriority.setup("thread Priority", 0, -15, 15));
 #endif
 
 	ofSetBackgroundColor(ofColor(50,50,50));

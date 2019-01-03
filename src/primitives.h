@@ -11,15 +11,16 @@
 class Ray
 {
 public:
-	Ray(glm::vec3 p, glm::vec3 d) { this->p = p; this->d = d; }
-	void draw(float t) { ofDrawLine(p, p + t * d); }
+	Ray(glm::vec3 p, glm::vec3 d) { this->point = p; this->dir = d; }
+	void draw(float t) { ofDrawLine(point, point + t * dir); }
 
 	glm::vec3 evalPoint(float t)
 	{
-		return (p + t * d);
+		return (point + t * dir);
 	}
 
-	glm::vec3 p, d;
+	glm::vec3 point;
+	glm::vec3 dir;
 };
 
 class IntersectInfo

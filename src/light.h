@@ -108,18 +108,18 @@ public:
 
 	bool intersect(const Ray &ray, IntersectInfo &intersect) 
 	{ 
-		if (glm::intersectRaySphere(ray.p, ray.d, position, .1f, intersect.point, intersect.normal))
+		if (glm::intersectRaySphere(ray.point, ray.dir, position, .1f, intersect.point, intersect.normal))
 		{
-			intersect.dist = glm::length(intersect.point - ray.p);
+			intersect.dist = glm::length(intersect.point - ray.point);
 			return true;
 		}
 		return false;
 	}
 	bool intersectView(const Ray &ray, IntersectInfo &intersect) 
 	{
-		if (glm::intersectRaySphere(ray.p, ray.d, position, .1f, intersect.point, intersect.normal))
+		if (glm::intersectRaySphere(ray.point, ray.dir, position, .1f, intersect.point, intersect.normal))
 		{
-			intersect.dist = glm::length(intersect.point - ray.p);
+			intersect.dist = glm::length(intersect.point - ray.point);
 			return true;
 		}
 		return false;

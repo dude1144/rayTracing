@@ -46,7 +46,9 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias = false,
 					endHeight = image->getHeight();
 
 				threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, image, i, j, endWidth, endHeight, antiAlias));
-
+				
+				SetThreadPriority(threads[threads.size() - 1].native_handle(), THREAD_MODE_BACKGROUND_BEGIN);
+				SetThreadPriority(threads[threads.size() - 1].native_handle(), -3);
 			}
 		}
 		for (int i = 0; i < threads.size(); i++)
@@ -114,7 +116,9 @@ void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, in
 						colors.push_back(getColor(scene, u, v));
 					}
 				}
+				writeLock.lock();
 				image->setColor(i, (image->getHeight() - j) - 1, averageColors(colors));
+				writeLock.unlock();
 			}
 			else
 			{
@@ -123,7 +127,9 @@ void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, in
 
 				ofColor col = this->getColor(scene, u, v);
 
+				writeLock.lock();
 				image->setColor(i, (image->getHeight() - j) - 1, col);
+				writeLock.unlock();
 			}
 		}
 	}

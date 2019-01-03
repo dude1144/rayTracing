@@ -50,10 +50,10 @@ void Mesh::setupUI()
 bool Sphere::intersect(const Ray &ray, IntersectInfo &intersect)
 {
 	//check for intersection and save point and normal into intersect
-	if (glm::intersectRaySphere(ray.p, ray.d, position, radius, intersect.point, intersect.normal))
+	if (glm::intersectRaySphere(ray.point, ray.dir, position, radius, intersect.point, intersect.normal))
 	{
 		//if intersection happened, calculate the distance and return true
-		intersect.dist = glm::length(intersect.point - ray.p);
+		intersect.dist = glm::length(intersect.point - ray.point);
 		return true;
 	}
 	return false;
@@ -62,10 +62,10 @@ bool Sphere::intersect(const Ray &ray, IntersectInfo &intersect)
 bool Sphere::intersectView(const Ray &ray, IntersectInfo &intersect)
 {
 	//check for intersection and save point and normal into intersect
-	if (glm::intersectRaySphere(ray.p, ray.d, position, radius, intersect.point, intersect.normal))
+	if (glm::intersectRaySphere(ray.point, ray.dir, position, radius, intersect.point, intersect.normal))
 	{
 		//if intersection happened, calculate the distance and return true
-		intersect.dist = glm::length(intersect.point - ray.p);
+		intersect.dist = glm::length(intersect.point - ray.point);
 		return true;
 	}
 	return false;
@@ -74,7 +74,7 @@ bool Sphere::intersectView(const Ray &ray, IntersectInfo &intersect)
 bool Plane::intersect(const Ray &ray, IntersectInfo &intersect)
 {
 	//check for intersection and save point and normal into intersect
-	if (glm::intersectRayPlane(ray.p, ray.d, position, this->normal, intersect.dist)) 
+	if (glm::intersectRayPlane(ray.point, ray.dir, position, this->normal, intersect.dist)) 
 	{
 		Ray r = ray;
 		intersect.point = r.evalPoint(intersect.dist);
@@ -92,19 +92,19 @@ bool Plane::intersectView(const Ray &ray, IntersectInfo &intersect)
 	glm::vec3 p3 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2));
 	glm::vec3 p4 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2));
 
-	if( intersectRayTriangle(ray.p, ray.d, p1, p2, p3, intersect.barry) ) 
+	if( intersectRayTriangle(ray.point, ray.dir, p1, p2, p3, intersect.barry) ) 
 	{
 		intersect.barry.z = 1 - (intersect.barry.x + intersect.barry.y);
 		intersect.point = (p1 * intersect.barry.z) + (p2 * intersect.barry.x) + (p3 * intersect.barry.y);
-		intersect.dist = glm::length(intersect.point - ray.p);
+		intersect.dist = glm::length(intersect.point - ray.point);
 		intersect.normal = glm::normalize(this->normal);
 		return true;
 	}
-	else if ( intersectRayTriangle(ray.p, ray.d, p1, p3, p4, intersect.barry) )
+	else if ( intersectRayTriangle(ray.point, ray.dir, p1, p3, p4, intersect.barry) )
 	{
 		intersect.barry.z = 1 - (intersect.barry.x + intersect.barry.y);
 		intersect.point = (p1 * intersect.barry.z) + (p3 * intersect.barry.x) + (p4 * intersect.barry.y);
-		intersect.dist = glm::length(intersect.point - ray.p);
+		intersect.dist = glm::length(intersect.point - ray.point);
 		intersect.normal = glm::normalize(this->normal);
 		return true;
 	}
@@ -116,8 +116,8 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 	IntersectInfo closest;
 
 	glm::mat4 mInv = glm::inverse(getMatrix());
-	glm::vec3 p = mInv * glm::vec4(ray.p, 1.0);
-	glm::vec3 p1 = mInv * glm::vec4(ray.p + ray.d, 1.0);
+	glm::vec3 p = mInv * glm::vec4(ray.point, 1.0);
+	glm::vec3 p1 = mInv * glm::vec4(ray.point + ray.dir, 1.0);
 	glm::vec3 d = glm::normalize(p1 - p);
 
 	for (int i = 0; i < model.getNumMeshes(); i++)

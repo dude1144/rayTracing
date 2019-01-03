@@ -13,6 +13,7 @@
 #include <cmath>
 #include <chrono>
 #include <thread>
+#include <mutex>
 #include <future>
 #include <atomic>
 
@@ -53,6 +54,7 @@ public:
 		return;
 	}
 
+	int numDivisions = 4;
 private:
 	void renderImagePiece(Scene scene, ofImage *image, int startWidth, int startHeight, int endWidth, int endHeight, bool antiAlias);
 	ofColor averageColors(vector<ofColor> colors);
@@ -62,5 +64,6 @@ private:
 	ofColor blinn_phong(SceneObject *obj, Light *light, IntersectInfo intersect);      //calculate Blinn-Phong color
 	bool inShadow(vector<SceneObject*> objects, Light *light, IntersectInfo intersect);//determine if point is in a shadow
 
-	int numDivisions = 16;
+	
+	std::mutex writeLock;
 };

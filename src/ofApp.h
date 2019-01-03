@@ -75,6 +75,8 @@ public:
 	ofxToggle showIntersectionNormals;
 	ofxToggle useAntiAliasing;
 	ofxToggle useMultithreading;
+	ofxIntSlider numImageDivisions;
+	ofxIntSlider threadPriority;
 
 	vector<IntersectInfo> intersections;
 #endif
