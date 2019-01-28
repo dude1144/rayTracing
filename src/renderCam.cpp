@@ -127,9 +127,9 @@ void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, in
 
 				ofColor col = this->getColor(scene, u, v);
 
-				writeLock.lock();
+				//writeLock.lock();
 				image->setColor(i, (image->getHeight() - j) - 1, col);
-				writeLock.unlock();
+				//writeLock.unlock();
 			}
 		}
 	}
