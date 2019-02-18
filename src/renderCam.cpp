@@ -34,6 +34,7 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias = false,
 	if (multiThread)
 	{
 		vector<std::thread> threads;
+		std::queue<glm::vec4> pieces;
 		for (int i = 0; i < image->getWidth(); i += image->getWidth()/numDivisions)
 		{
 			for (int j = 0; j < image->getHeight(); j += image->getHeight()/numDivisions)
@@ -45,12 +46,33 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias = false,
 				if (endHeight > image->getHeight())
 					endHeight = image->getHeight();
 
-				threads.push_back(std::thread(&RenderCam::renderImagePiece, this, scene, image, i, j, endWidth, endHeight, antiAlias));
-				
-				SetThreadPriority(threads[threads.size() - 1].native_handle(), THREAD_MODE_BACKGROUND_BEGIN);
-				SetThreadPriority(threads[threads.size() - 1].native_handle(), -3);
+				pieces.push(glm::vec4(i, j, endWidth, endHeight));
 			}
 		}
+		
+		for (int i = 0; i < std::thread::hardware_concurrency(); i++)
+		{
+			threads.push_back(std::thread([&]() 
+			{
+				bool notEmpty = pieces.size() != 0;
+				while (notEmpty)
+				{
+					popLock.lock();
+					glm::vec4 piece = pieces.front();
+					pieces.pop();
+					popLock.unlock();
+					renderImagePiece(scene, image, piece[0], piece[1], piece[2], piece[3], antiAlias);
+
+					popLock.lock();
+					notEmpty = pieces.size() != 0;
+					popLock.unlock();
+				}
+			}));
+
+			SetThreadPriority(threads[threads.size() - 1].native_handle(), THREAD_MODE_BACKGROUND_BEGIN);
+			SetThreadPriority(threads[threads.size() - 1].native_handle(), -3);
+		}
+
 		for (int i = 0; i < threads.size(); i++)
 		{
 			threads[i].join();

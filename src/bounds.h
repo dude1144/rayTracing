@@ -96,12 +96,68 @@ public:
 	}
 };
 
+class OrientedBoundingBox
+{
+	glm::vec3 Center;
+	glm::vec3 xAxis;
+	glm::vec3 yAxis;
+	glm::vec3 zAxis;
+	float xExtent;
+	float yExtent;
+	float zEntent;
+
+	OrientedBoundingBox(glm::vec3 Center, glm::vec3 xAxis, glm::vec3 yAxis, glm::vec3 zAxis, float xExtent, float yExtent, float zExtent)
+	{
+		this->Center = Center;
+		this->xAxis = xAxis;
+		this->yAxis = yAxis;
+		this->zAxis = zAxis;
+		this->xExtent = xExtent;
+		this->yExtent = yExtent;
+		this->zEntent = zEntent;
+	}
+
+	bool intersect(OrientedBoundingBox *box)
+	{
+
+	}
+};
+
 class AxisAlignedBoundingBox 
 {
-	glm::vec3 position;
-	float xSize;
-	float ySize;
-	float zSize;
+	glm::vec3 p1;
+	glm::vec3 p2;
 
+	AxisAlignedBoundingBox(glm::vec3 p1, glm::vec3 p2)
+	{
+		this->p1 = p1;
+		this->p2 = p2;
+	}
 
+	bool intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
+	{
+
+	}
+
+	bool intersect(AxisAlignedBoundingBox *box)
+	{
+		glm::vec3 center = (p1 + p2) / 2;
+		glm::vec3 boxCenter = (box->p1 + box->p2) / 2;
+
+		float widthx = abs(p1.x - center.x);
+		float widthy = abs(p1.y - center.y);
+		float widthz = abs(p1.z - center.z);
+		float boxwidthx = abs(box->p1.x - boxCenter.x);
+		float boxwidthy = abs(box->p1.y - boxCenter.y);
+		float boxwidthz = abs(box->p1.z - boxCenter.z);
+
+		if ((center.x - boxCenter.x) > (widthx + boxwidthx))
+			return false;
+		if ((center.y - boxCenter.y) > (widthy + boxwidthy))
+			return false;
+		if ((center.z - boxCenter.z) > (widthz + boxwidthz))
+			return false;
+
+		return true;
+	}
 };
