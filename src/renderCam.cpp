@@ -127,9 +127,9 @@ void RenderCam::renderImagePiece(Scene scene, ofImage *image, int startWidth, in
 
 				ofColor col = this->getColor(scene, u, v);
 
-				//writeLock.lock();
+				writeLock.lock();
 				image->setColor(i, (image->getHeight() - j) - 1, col);
-				//writeLock.unlock();
+				writeLock.unlock();
 			}
 		}
 	}
@@ -152,6 +152,10 @@ ofColor RenderCam::getColor(Scene scene, float u, float v)
 			if (!inShadow(scene.objects, scene.lights[k], intersect))     //if the point isn't in a shadow
 			{
 				col = col + lambertian(hit, scene.lights[k], intersect) + blinn_phong(hit, scene.lights[k], intersect); // the color is the current color plus the lambertian and blin-phong for this light
+				/*std::thread lamThread(&RenderCam::lambertian_t, this, col, hit, scene.lights[k], intersect);
+				std::thread bpThread(&RenderCam::blinn_phong_t, this, col, hit, scene.lights[k], intersect);
+				lamThread.join();
+				bpThread.join();*/
 			}
 		}
 
@@ -176,6 +180,31 @@ ofColor RenderCam::blinn_phong(SceneObject *obj, Light *light, IntersectInfo int
 		(light->intensity / std::pow(glm::length(light->position - intersect.point), 2)) *
 		std::pow(std::max(0.0f, glm::dot(glm::normalize(intersect.normal), glm::normalize((l + v) / glm::length(l + v)))), obj->mat.p) *
 		light->mat.diffuseColor;
+}
+
+void RenderCam::lambertian_t(ofColor col, SceneObject * obj, Light * light, IntersectInfo intersect)
+{
+	ofColor lamCol = obj->mat.diffuseColor *
+		(light->intensity / std::pow(glm::length(light->position - intersect.point), 2)) *
+		std::max(0.0f, glm::dot(glm::normalize(intersect.normal), glm::normalize(light->position - intersect.point))) *
+		light->mat.diffuseColor;
+	colLock.lock();
+	col = col + lamCol;
+	colLock.unlock();
+}
+
+void RenderCam::blinn_phong_t(ofColor col, SceneObject *obj, Light *light, IntersectInfo intersect)
+{
+	glm::vec3 v = glm::normalize(this->position - intersect.point);
+	glm::vec3 l = glm::normalize(light->position - intersect.point);
+	ofColor bpCol = obj->mat.specularColor *
+		(light->intensity / std::pow(glm::length(light->position - intersect.point), 2)) *
+		std::pow(std::max(0.0f, glm::dot(glm::normalize(intersect.normal), glm::normalize((l + v) / glm::length(l + v)))), obj->mat.p) *
+		light->mat.diffuseColor;
+	colLock.lock();
+	col = col + bpCol;
+	colLock.unlock();
+
 }
 
 bool RenderCam::inShadow(vector<SceneObject*> objects, Light * light, IntersectInfo intersect)

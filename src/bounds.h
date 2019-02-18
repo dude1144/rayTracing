@@ -11,6 +11,7 @@ public:
 	virtual void draw() = 0;
 };*/
 
+/*
 class BoundingBox// : public Bounds
 {
 public:
@@ -59,6 +60,39 @@ public:
 		ofDrawLine(vert[1], vert[5]);
 		ofDrawLine(vert[2], vert[6]);
 		ofDrawLine(vert[3], vert[7]);
+	}
+};*/
+
+class boundingBox
+{
+public:
+	glm::vec3 position;
+	glm::vec3 rotation;
+	glm::vec3 scale;
+
+
+
+	glm::mat4 getRotateMatrix()
+	{
+		return (glm::eulerAngleYXZ(glm::radians(0.0f), glm::radians(0.0f), glm::radians(0.0f)));
+	}
+	glm::mat4 getTranslateMatrix()
+	{
+		return (glm::translate(glm::mat4(1.0), glm::vec3(position.x, position.y, position.z)));
+	}
+	glm::mat4 getScaleMatrix()
+	{
+		return (glm::scale(glm::mat4(1.0), glm::vec3(1, 1, 1)));
+	}
+
+	glm::mat4 getMatrix()
+	{
+		glm::mat4 scale = getScaleMatrix();
+		glm::mat4 rotate = getRotateMatrix();
+		glm::mat4 trans = getTranslateMatrix();
+
+		return (trans * rotate * scale);
+
 	}
 };
 

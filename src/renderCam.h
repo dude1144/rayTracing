@@ -62,8 +62,10 @@ private:
 	//void getColor(Scene scene, float u, float v, std::promise<ofColor> &&p);
 	ofColor lambertian(SceneObject *obj, Light *light, IntersectInfo intersect);       //calculate lambertian color
 	ofColor blinn_phong(SceneObject *obj, Light *light, IntersectInfo intersect);      //calculate Blinn-Phong color
+	void lambertian_t(ofColor col, SceneObject *obj, Light *light, IntersectInfo intersect);       //calculate lambertian color
+	void blinn_phong_t(ofColor col, SceneObject *obj, Light *light, IntersectInfo intersect);      //calculate Blinn-Phong color
 	bool inShadow(vector<SceneObject*> objects, Light *light, IntersectInfo intersect);//determine if point is in a shadow
 
-	
 	std::mutex writeLock;
+	std::mutex colLock;
 };
