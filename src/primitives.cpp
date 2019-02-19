@@ -115,6 +115,7 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 {
 	IntersectInfo closest;
 
+	//transform the ray into object space
 	glm::mat4 mInv = glm::inverse(getMatrix());
 	glm::vec3 p = mInv * glm::vec4(ray.point, 1.0);
 	glm::vec3 p1 = mInv * glm::vec4(ray.point + ray.dir, 1.0);
@@ -168,7 +169,7 @@ bool Mesh::intersectView(const Ray &ray, IntersectInfo &intersect)
 bool Mesh::load(std::string name)
 {
 	bool m = model.loadModel(name);
-	model.setScale(.1, .1, .1);
+	model.setScale(1, 1, 1);
 #if _DEBUG //print out model information
 	cout << model.getScale() << endl;
 	vector<std::string> names = model.getMeshNames();

@@ -5,10 +5,10 @@
 //--------------------------------------------------------------
 void ofApp::setup() 
 {
-	scene.add(new Plane(glm::vec3(0, -1.6, 0), glm::vec3(0, 1, 0), ofColor::lightGray, ofColor::gray, 20));
-	scene.add(new Sphere(glm::vec3(0, 0, 0), 1, ofColor(74, 219, 94), ofColor::gray, 20));
-	scene.add(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor(255,65,65), ofColor::gray, 20));
-	scene.add(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor(65, 142, 255), ofColor::gray, 20));
+	//scene.add(new Plane(glm::vec3(0, -1.6, 0), glm::vec3(0, 1, 0), ofColor::lightGray, ofColor::gray, 20));
+	//scene.add(new Sphere(glm::vec3(0, 0, 0), 1, ofColor(74, 219, 94), ofColor::gray, 20));
+	//scene.add(new Sphere(glm::vec3(-2, 0, -2), 1.5, ofColor(255,65,65), ofColor::gray, 20));
+	//scene.add(new Sphere(glm::vec3(2, 0, -1.5), 1.2, ofColor(65, 142, 255), ofColor::gray, 20));
 	scene.add(new PointLight(glm::vec3(2, 3, 2), 10, ofColor(255,255,255)));
 	scene.add(new PointLight(glm::vec3(-4, 2, 4), 10, ofColor(255, 255, 255)));
 	
@@ -64,9 +64,10 @@ void ofApp::draw()
 		
 
 		theCam->begin();
+		ofDrawSphere(glm::vec3(1, 0, 0), .1);
+		drawAxes();
 		ofNoFill();
 
-		//bound.draw();
 		ofSetColor(ofColor::lightSkyBlue);
 		renderCam.drawFrustum();
 		ofSetColor(ofColor::blue);
@@ -203,6 +204,11 @@ void ofApp::keyReleased(int key)
 			}
 		}
 		break;
+	case 'T':
+	case 't':
+	{
+		break;
+	}
 	case OF_KEY_SHIFT:
 		bShiftPressed = false;
 		break;
@@ -364,4 +370,14 @@ void ofApp::pressedAddLight()
 	scene.add(new PointLight());
 	bShowAddPanel = false;
 	mainCam.enableMouseInput();
+}
+
+void ofApp::drawAxes()
+{
+	ofSetColor(ofColor::green);
+	ofDrawLine(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	ofSetColor(ofColor::blue);
+	ofDrawLine(glm::vec3(0, 0, 0), glm::vec3(0, 0, 1));
+	ofSetColor(ofColor::red);
+	ofDrawLine(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0));
 }

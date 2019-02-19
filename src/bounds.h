@@ -98,33 +98,32 @@ public:
 
 class OrientedBoundingBox
 {
-	glm::vec3 Center;
-	glm::vec3 xAxis;
-	glm::vec3 yAxis;
-	glm::vec3 zAxis;
-	float xExtent;
-	float yExtent;
-	float zEntent;
+public:
+	glm::vec3 center;
+	glm::vec3 axes[3];
+	float extents[3];
 
-	OrientedBoundingBox(glm::vec3 Center, glm::vec3 xAxis, glm::vec3 yAxis, glm::vec3 zAxis, float xExtent, float yExtent, float zExtent)
+	OrientedBoundingBox(glm::vec3 center, glm::vec3 xAxis, glm::vec3 yAxis, glm::vec3 zAxis, float xExtent, float yExtent, float zExtent)
 	{
-		this->Center = Center;
-		this->xAxis = xAxis;
-		this->yAxis = yAxis;
-		this->zAxis = zAxis;
-		this->xExtent = xExtent;
-		this->yExtent = yExtent;
-		this->zEntent = zEntent;
+		this->center = center;
+		this->axes[0] = glm::normalize(xAxis);
+		this->axes[1] = glm::normalize(yAxis);
+		this->axes[2] = glm::normalize(zAxis);
+		this->extents[0] = xExtent;
+		this->extents[1] = yExtent;
+		this->extents[2] = zExtent;
 	}
 
-	bool intersect(OrientedBoundingBox *box)
-	{
-
-	}
+	void draw();
+	bool intersect(OrientedBoundingBox *box);
+	bool intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
+	bool intersect(glm::vec3 p1, float radius);
+	
 };
 
 class AxisAlignedBoundingBox 
 {
+public:
 	glm::vec3 p1;
 	glm::vec3 p2;
 
