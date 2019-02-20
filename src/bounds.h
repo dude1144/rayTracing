@@ -113,6 +113,17 @@ public:
 		this->extents[1] = yExtent;
 		this->extents[2] = zExtent;
 	}
+	OrientedBoundingBox(glm::vec3 min, glm::vec3 max)
+	{
+		center = (max - min) / 2;
+		axes[0] = glm::vec3(1, 0, 0);
+		axes[1] = glm::vec3(0, 1, 0);
+		axes[2] = glm::vec3(0, 0, 1);
+
+		extents[0] = abs(max.x - center.x);
+		extents[1] = abs(max.y - center.y);
+		extents[2] = abs(max.z - center.z);
+	}
 
 	void draw();
 	bool intersect(OrientedBoundingBox *box);

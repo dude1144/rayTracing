@@ -35,12 +35,12 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias = false,
 	{
 		vector<std::thread> threads;
 		std::queue<glm::vec4> pieces;
-		for (int i = 0; i < image->getWidth(); i += image->getWidth()/numDivisions)
+		for (int i = 0; i < image->getWidth(); i += 16)
 		{
-			for (int j = 0; j < image->getHeight(); j += image->getHeight()/numDivisions)
+			for (int j = 0; j < image->getHeight(); j += 16)
 			{
-				int endWidth = i + (image->getWidth() / numDivisions);
-				int endHeight = j + (image->getHeight() / numDivisions);
+				int endWidth = i + 16;
+				int endHeight = j + 16;
 				if (endWidth > image->getWidth())
 					endWidth = endWidth > image->getWidth();
 				if (endHeight > image->getHeight())
@@ -49,6 +49,9 @@ void RenderCam::renderImage(Scene scene, ofImage *image, bool antiAlias = false,
 				pieces.push(glm::vec4(i, j, endWidth, endHeight));
 			}
 		}
+#if _DEBUG
+		std::cout << "number of Pieces: " << pieces.size() << endl;
+#endif
 		
 		for (int i = 0; i < std::thread::hardware_concurrency(); i++)
 		{
@@ -174,10 +177,6 @@ ofColor RenderCam::getColor(Scene scene, float u, float v)
 			if (!inShadow(scene.objects, scene.lights[k], intersect))     //if the point isn't in a shadow
 			{
 				col = col + lambertian(hit, scene.lights[k], intersect) + blinn_phong(hit, scene.lights[k], intersect); // the color is the current color plus the lambertian and blin-phong for this light
-				/*std::thread lamThread(&RenderCam::lambertian_t, this, col, hit, scene.lights[k], intersect);
-				std::thread bpThread(&RenderCam::blinn_phong_t, this, col, hit, scene.lights[k], intersect);
-				lamThread.join();
-				bpThread.join();*/
 			}
 		}
 

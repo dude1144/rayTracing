@@ -52,6 +52,8 @@ bool OrientedBoundingBox::intersect(OrientedBoundingBox *box)
 	return true;
 }
 
+/*implemented from seperating axis theorem, found in
+the paper Dynamic Collision Detection by David Eberly,*/
 bool OrientedBoundingBox::intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
 {
 	glm::vec3 edges[3] = { p2 - p1, p3 - p1, edges[1] - edges[0]};
