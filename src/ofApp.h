@@ -63,6 +63,8 @@ public:
 	ofxButton addPlane;
 	ofxButton addLight;
 
+	OrientedBoundingBox b1 = OrientedBoundingBox(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1), 1, 1, 1);
+	glm::vec3 point = glm::vec3(0, 0, 0);
 #if _DEBUG // debug tools
 
 	ofxPanel debugPanel;

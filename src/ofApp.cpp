@@ -67,6 +67,9 @@ void ofApp::draw()
 		drawAxes();
 		ofNoFill();
 
+		ofSetColor(ofColor::aquamarine);
+		b1.draw();
+
 		ofSetColor(ofColor::lightSkyBlue);
 		renderCam.drawFrustum();
 		ofSetColor(ofColor::blue);
@@ -206,6 +209,17 @@ void ofApp::keyReleased(int key)
 	case 'T':
 	case 't':
 	{
+		for(int i = 0; i < scene.objects.size(); i++)
+		{
+			if (b1.intersect(scene.objects[i]))
+				cout << "OBB intersects: " << scene.objects[i]->name << endl;
+		}
+		for (int i = 0; i < scene.lights.size(); i++)
+		{
+			if (b1.intersect(scene.lights[i]))
+				cout << "OBB intersects: " << scene.lights[i]->name << endl;
+		}
+		cout << endl;
 		break;
 	}
 	case OF_KEY_SHIFT:
@@ -235,9 +249,6 @@ void ofApp::mouseDragged(int x, int y, int button)
 	dragged = true;
 	if (selected && moving)
 	{
-#if _DEBUG
-		cout << "moving" << endl;
-#endif
 		mainCam.disableMouseInput();
 		Ray selectRay = Ray(theCam->getPosition(), glm::normalize(theCam->screenToWorld(glm::vec3(ofGetMouseX(), ofGetMouseY(), 0)) - theCam->getPosition()));
 		IntersectInfo temp;

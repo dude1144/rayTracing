@@ -1,12 +1,14 @@
 #include "bounds.h"
+#include "light.h"
 
 void OrientedBoundingBox::draw()
 {
 	ofDrawBox(center, extents[0]*2, extents[1]*2, extents[2]*2);
 }
 
-/*implemented from seperating axis theorem, found in 
-the paper Dynamic Collision Detection by David Eberly,*/
+//implemented from seperating axis theorem, found in 
+//the paper Dynamic Collision Detection by David Eberly,
+//found at https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
 bool OrientedBoundingBox::intersect(OrientedBoundingBox *box)
 {
 	for (int i = 0; i < 3; i++)
@@ -52,8 +54,9 @@ bool OrientedBoundingBox::intersect(OrientedBoundingBox *box)
 	return true;
 }
 
-/*implemented from seperating axis theorem, found in
-the paper Dynamic Collision Detection by David Eberly,*/
+//implemented from seperating axis theorem, found in 
+//the paper Dynamic Collision Detection by David Eberly,
+//found at https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
 bool OrientedBoundingBox::intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
 {
 	glm::vec3 edges[3] = { p2 - p1, p3 - p1, edges[1] - edges[0]};
@@ -128,6 +131,8 @@ bool OrientedBoundingBox::intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
 	return true;
 }
 
+//intersect sphere by finding the closest point on the OBB then 
+//checking if the distance to that point is greater than the radius
 bool OrientedBoundingBox::intersect(glm::vec3 p1, float radius)
 {
 	glm::vec3 closestPoint = center;
@@ -149,4 +154,80 @@ bool OrientedBoundingBox::intersect(glm::vec3 p1, float radius)
 		return false;
 
 	return true;
+}
+
+//intersection of OBB with plane using seperating axis theorem
+bool OrientedBoundingBox::intersect(glm::vec3 p1, glm::vec3 normal)
+{
+	float interval = this->extents[0] * abs(glm::dot(normal, this->axes[0])) + 
+					 this->extents[1] * abs(glm::dot(normal, this->axes[1])) +
+					 this->extents[2] * abs(glm::dot(normal, this->axes[2]));
+	float distance = abs(glm::dot(normal, this->center - p1));
+
+	return distance <= interval;
+}
+
+bool OrientedBoundingBox::contains(glm::vec3 p1)
+{
+	if (abs(glm::dot(p1, this->axes[0])) > this->extents[0])
+		return false;
+	if (abs(glm::dot(p1, this->axes[1])) > this->extents[1])
+		return false;
+	if (abs(glm::dot(p1, this->axes[2])) > this->extents[2])
+		return false;
+
+	return true;
+}
+
+
+//determine which intersect to call if a generic pointer is passed
+bool OrientedBoundingBox::intersect(SceneObject* object)
+{
+	if (dynamic_cast<Mesh*>(object))
+		return intersect(dynamic_cast<Mesh*>(object));
+	else if (dynamic_cast<Sphere*>(object))
+		return intersect(dynamic_cast<Sphere*>(object));
+	else if (dynamic_cast<Plane*>(object))
+		return intersect(dynamic_cast<Plane*>(object));
+	else if (dynamic_cast<Light*>(object))
+		return intersect(dynamic_cast<Light*>(object));
+}
+
+bool OrientedBoundingBox::intersect(Sphere* sphere)
+{
+	return intersect(sphere->position, sphere->radius);
+}
+bool OrientedBoundingBox::intersect(Plane* plane)
+{
+	return intersect(plane->position, plane->normal);
+}
+bool OrientedBoundingBox::intersect(Light* light)
+{
+	return contains(light->position);
+}
+bool OrientedBoundingBox::intersect(Mesh* mesh)
+{
+	glm::mat4 rInv = glm::inverse(mesh->getRotateMatrix());
+	OrientedBoundingBox temp;
+	temp.center = glm::inverse(mesh->getTranslateMatrix()) * glm::vec4(temp.center, 1);
+	temp.axes[0] = glm::normalize(rInv * glm::vec4(temp.axes[0], 1));
+	temp.axes[1] = glm::normalize(rInv * glm::vec4(temp.axes[1], 1));
+	temp.axes[2] = glm::normalize(rInv * glm::vec4(temp.axes[2], 1));
+	
+	for (int i = 0; i < mesh->ofmeshes.size(); i++)
+	{
+		vector<ofIndexType> indices = mesh->ofmeshes[i].getIndices();
+
+		for (int j = 0; j < indices.size(); j += 3)
+		{
+			glm::vec3 v1 = mesh->ofmeshes[i].getVertices()[indices[j]];
+			glm::vec3 v2 = mesh->ofmeshes[i].getVertices()[indices[j + 1]];
+			glm::vec3 v3 = mesh->ofmeshes[i].getVertices()[indices[j + 2]];
+
+			if (this->intersect(v1, v2, v3))
+				return true;
+		}
+	}
+
+	return false;
 }

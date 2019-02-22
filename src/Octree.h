@@ -2,7 +2,9 @@
 
 #include <vector>
 #include "bounds.h"
+#include "scene.h"
 
+#define MAX_LEAF_OBJECTS 3
 template<class T>
 
 class Octree
@@ -10,6 +12,7 @@ class Octree
 public:
 	Octree octands[8];
 	OrientedBoundingBox bounds;
+	vector<SceneObject*> objects;
 
 	Octree(glm::vec3 min, glm::vec3 max)
 	{
@@ -35,4 +38,27 @@ public:
 		}
 	}
 
+	void eval(Scene scene)
+	{
+		for (int i = 0; i < scene.objects.size(); i++)
+		{
+			if (this->intersect(scene.objects[i]))
+				this->objects.push_back(scene.objects[i]);
+		}
+		for (int i = 0; i < scene.lights.size(); i++)
+		{
+			if (this->intersect(scene.lights[i]))
+				this->objects.push_back(scene.lights[i]);
+		}
+
+		if (objects.size() > MAX_LEAF_OBJECTS)
+		{
+			//initilize octants and eval them
+		}
+	}
+
+	void eval(vector<SceneObject*> scene)
+	{
+
+	}
 };

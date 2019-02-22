@@ -121,17 +121,17 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 	glm::vec3 p1 = mInv * glm::vec4(ray.point + ray.dir, 1.0);
 	glm::vec3 d = glm::normalize(p1 - p);
 
-	for (int i = 0; i < model.getNumMeshes(); i++)
+	for (int i = 0; i < ofmeshes.size(); i++)
 	{
-		vector<ofIndexType> indices = model.getMesh(i).getIndices();
+		vector<ofIndexType> indices = ofmeshes[i].getIndices();
 
 		for (int j = 0; j < indices.size(); j += 3)
 		{
 			IntersectInfo temp;
 
-			glm::vec3 v1 = model.getMesh(i).getVertices()[indices[j]];
-			glm::vec3 v2 = model.getMesh(i).getVertices()[indices[j + 1]];
-			glm::vec3 v3 = model.getMesh(i).getVertices()[indices[j + 2]];
+			glm::vec3 v1 = ofmeshes[i].getVertices()[indices[j]];
+			glm::vec3 v2 = ofmeshes[i].getVertices()[indices[j + 1]];
+			glm::vec3 v3 = ofmeshes[i].getVertices()[indices[j + 2]];
 
 			if (glm::intersectRayTriangle(p, d, v1, v2, v3, temp.barry))
 			{
@@ -142,7 +142,7 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 				{
 					if (smooth)
 					{
-						temp.normal = (model.getMesh(i).getNormal(indices[j]) * temp.barry.z) + (model.getMesh(i).getNormal(indices[j + 1]) * temp.barry.x) + (model.getMesh(i).getNormal(indices[j + 2]) * temp.barry.y);
+						temp.normal = (ofmeshes[i].getNormal(indices[j]) * temp.barry.z) + (ofmeshes[i].getNormal(indices[j + 1]) * temp.barry.x) + (ofmeshes[i].getNormal(indices[j + 2]) * temp.barry.y);
 					}
 					else
 						temp.normal = glm::normalize(glm::cross((v1 - v2), (v1 - v3)));
@@ -168,8 +168,14 @@ bool Mesh::intersectView(const Ray &ray, IntersectInfo &intersect)
 
 bool Mesh::load(std::string name)
 {
+	ofxAssimpModelLoader model;
 	bool m = model.loadModel(name);
-	model.setScale(1, 1, 1);
+
+	for (int i = 0; i < model.getMeshCount(); i++)
+	{
+		ofmeshes.push_back(model.getMesh(i));
+	}
+
 #if _DEBUG //print out model information
 	cout << model.getScale() << endl;
 	vector<std::string> names = model.getMeshNames();
@@ -181,7 +187,9 @@ bool Mesh::load(std::string name)
 		cout << "\tNumFaces: " << model.getMesh(i).getUniqueFaces().size() << endl;
 		cout << "\tNumNormals: " << model.getMesh(i).getNumNormals() << endl;
 		cout << "\tNumIndices: " << model.getMesh(i).getIndices().size() << endl;
+		cout << "\tNumTexCoords: " << model.getMesh(i).getTexCoords().size() << endl;
 	}
 #endif
+	model.clear();
 	return m;
 }

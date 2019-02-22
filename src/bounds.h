@@ -1,67 +1,8 @@
 #pragma once
 
 #include "ofMain.h"
-
-/*class Bounds
-{
-public:
-	glm::vec3 position;
-
-	virtual bool intersect(BoundingBox bound) { return false; }
-	virtual void draw() = 0;
-};*/
-
-/*
-class BoundingBox// : public Bounds
-{
-public:
-	glm::vec3 vert[8]; 
-
-	BoundingBox(glm::vec3 topTopLeft, glm::vec3 topTopRight, glm::vec3 topBottomLeft, glm::vec3 topBottomRight,
-		glm::vec3 bottomTopLeft, glm::vec3 bottomTopRight, glm::vec3 bottomBottomLeft, glm::vec3 bottomBottomRight)
-	{
-		vert[0] = topTopLeft;
-		vert[1] = topTopRight;
-		vert[2] = topBottomLeft;
-		vert[3] = topBottomRight;
-		vert[4] = bottomTopLeft;
-		vert[5] = bottomTopRight;
-		vert[6] = bottomBottomLeft;
-		vert[7] = bottomBottomRight;
-	}
-
-
-	bool intersect(BoundingBox box)
-	{
-		//glm::proj()
-		return false;
-	}
-	bool intersect(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3)
-	{
-		return false;
-	}
-
-	void draw()
-	{
-		//draw top face
-		ofDrawLine(vert[0], vert[1]);
-		ofDrawLine(vert[1], vert[3]);
-		ofDrawLine(vert[0], vert[2]);
-		ofDrawLine(vert[3], vert[2]);
-
-		//draw bottom face
-		ofDrawLine(vert[4], vert[5]);
-		ofDrawLine(vert[5], vert[7]);
-		ofDrawLine(vert[4], vert[6]);
-		ofDrawLine(vert[7], vert[6]);
-
-		//conntect them
-		ofDrawLine(vert[0], vert[4]);
-		ofDrawLine(vert[1], vert[5]);
-		ofDrawLine(vert[2], vert[6]);
-		ofDrawLine(vert[3], vert[7]);
-	}
-};*/
+#include "primitives.h"
+#include "light.h"
 
 class boundingBox
 {
@@ -103,6 +44,17 @@ public:
 	glm::vec3 axes[3];
 	float extents[3];
 
+	OrientedBoundingBox()
+	{
+		this->center = glm::vec3(0,0,0);
+		this->axes[0] = glm::normalize(glm::vec3(1,0,0));
+		this->axes[1] = glm::normalize(glm::vec3(0,1,0));
+		this->axes[2] = glm::normalize(glm::vec3(0,0,1));
+		this->extents[0] = 1;
+		this->extents[1] = 1;
+		this->extents[2] = 1;
+	}
+
 	OrientedBoundingBox(glm::vec3 center, glm::vec3 xAxis, glm::vec3 yAxis, glm::vec3 zAxis, float xExtent, float yExtent, float zExtent)
 	{
 		this->center = center;
@@ -129,7 +81,15 @@ public:
 	bool intersect(OrientedBoundingBox *box);
 	bool intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
 	bool intersect(glm::vec3 p1, float radius);
+	bool intersect(glm::vec3 p1, glm::vec3 normal);
 	
+	bool contains(glm::vec3 p1);
+
+	bool intersect(SceneObject* object);
+	bool intersect(Sphere* sphere);
+	bool intersect(Plane* plane);
+	bool intersect(Mesh* mesh);
+	bool intersect(Light* light);
 };
 
 class AxisAlignedBoundingBox 

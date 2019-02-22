@@ -198,10 +198,23 @@ private:
 	void setupUI();
 };
 
+class simpleMesh
+{
+	vector<glm::vec3> verts;
+	vector<glm::vec3> norms;
+	vector<glm::vec2> textureCoordinates;
+	vector<glm::vec3> tris;
+
+	void draw();
+	void drawWireframe();
+	void drawSolid();
+};
+
 class Mesh : public SceneObject
 {
 public:
-	ofxAssimpModelLoader model;
+	vector<ofMesh> ofmeshes;
+	vector<simpleMesh> meshes;
 	ofxToggle smooth;
 
 	Mesh(std::string name)
@@ -211,8 +224,6 @@ public:
 		smooth = false;
 
 		this->load(name);
-		//model.setPosition(position.x, position.y, position.z);
-		model.setPosition(1, 1, 1);
 		this->setupUI();
 	}
 
@@ -248,17 +259,17 @@ public:
 		ofPushMatrix();
 		ofMultMatrix(getMatrix());
 
-		for (int i = 0; i < model.getNumMeshes(); i++)
+		for (int i = 0; i < ofmeshes.size(); i++)
 		{
-			model.getMesh(i).drawWireframe();
+			ofmeshes[i].drawWireframe();
 #if _DEBUG
-			vector<glm::vec3> verts = model.getMesh(i).getVertices();
+			vector<glm::vec3> verts = ofmeshes[i].getVertices();
 			ofColor current = ofGetStyle().color;
 			ofSetColor(ofColor::hotPink);
 			for (int j = 0; j < verts.size(); j++)
 			{
 				ofDrawSphere(verts[j], .05);
-				ofDrawLine(verts[j], verts[j] + (model.getMesh(i).getNormals()[j] * .2));
+				ofDrawLine(verts[j], verts[j] + (ofmeshes[i].getNormals()[j] * .2));
 			}
 			ofSetColor(current);
 #endif
@@ -272,7 +283,6 @@ public:
 	void updateFromUI()
 	{
 		position = glm::vec3((float)xInput, (float)yInput, (float)zInput);
-		model.setPosition(xInput, yInput, zInput);
 		mat.p = mat.pInput;
 		mat.diffuseColor = mat.diffuseInput;
 		mat.specularColor = mat.specularInput;
