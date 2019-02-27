@@ -210,6 +210,8 @@ class simpleMesh
 	void drawSolid();
 };
 
+
+
 class Mesh : public SceneObject
 {
 public:
@@ -288,7 +290,51 @@ public:
 		mat.specularColor = mat.specularInput;
 	}
 
+	void  getTris(vector<SceneObject*>* vec)
+	{
+		for (int i = 0; i < this->ofmeshes.size(); i++)
+		{
+			vector<ofIndexType> indices = this->ofmeshes[i].getIndices();
+
+			for (int j = 0; j < indices.size(); j += 3)
+			{
+				glm::vec3 v1 = this->ofmeshes[i].getVertices()[indices[j]];
+				glm::vec3 v2 = this->ofmeshes[i].getVertices()[indices[j + 1]];
+				glm::vec3 v3 = this->ofmeshes[i].getVertices()[indices[j + 2]];
+
+				vec->push_back(new Triangle(this, i, j, j+1, j+2));
+			}
+		}
+	}
+
 private:
 	static int count;
 	void setupUI();
+};
+
+class Triangle : public SceneObject
+{
+public:
+	Mesh* parent;
+	int meshNum;
+	int indices[3];
+
+	Triangle(Mesh* parent, int meshNum, int i1, int i2, int i3)
+	{
+		this->parent = parent;
+		this->meshNum = meshNum;
+		indices[0] = i1;
+		indices[1] = i2;
+		indices[2] = i3;
+	}
+
+	void draw()
+	{
+
+	}
+
+	void updateFromUI()
+	{
+
+	}
 };

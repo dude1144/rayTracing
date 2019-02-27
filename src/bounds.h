@@ -67,7 +67,7 @@ public:
 	}
 	OrientedBoundingBox(glm::vec3 min, glm::vec3 max)
 	{
-		center = (max - min) / 2;
+		center = (max + min) / 2;
 		axes[0] = glm::vec3(1, 0, 0);
 		axes[1] = glm::vec3(0, 1, 0);
 		axes[2] = glm::vec3(0, 0, 1);
@@ -89,6 +89,7 @@ public:
 	bool intersect(Sphere* sphere);
 	bool intersect(Plane* plane);
 	bool intersect(Mesh* mesh);
+	bool intersect(Triangle* mesh);
 	bool intersect(Light* light);
 };
 

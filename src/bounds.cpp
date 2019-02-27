@@ -167,8 +167,10 @@ bool OrientedBoundingBox::intersect(glm::vec3 p1, glm::vec3 normal)
 	return distance <= interval;
 }
 
-bool OrientedBoundingBox::contains(glm::vec3 p1)
+bool OrientedBoundingBox::contains(glm::vec3 point)
 {
+	glm::vec3 p1 = point - this->center;
+
 	if (abs(glm::dot(p1, this->axes[0])) > this->extents[0])
 		return false;
 	if (abs(glm::dot(p1, this->axes[1])) > this->extents[1])
@@ -207,6 +209,7 @@ bool OrientedBoundingBox::intersect(Light* light)
 }
 bool OrientedBoundingBox::intersect(Mesh* mesh)
 {
+	//create a temporary OBB that is transformed into the meshs space
 	glm::mat4 rInv = glm::inverse(mesh->getRotateMatrix());
 	OrientedBoundingBox temp;
 	temp.center = glm::inverse(mesh->getTranslateMatrix()) * glm::vec4(temp.center, 1);
@@ -214,6 +217,7 @@ bool OrientedBoundingBox::intersect(Mesh* mesh)
 	temp.axes[1] = glm::normalize(rInv * glm::vec4(temp.axes[1], 1));
 	temp.axes[2] = glm::normalize(rInv * glm::vec4(temp.axes[2], 1));
 	
+	//iterate through all the meshes, checking every triangle
 	for (int i = 0; i < mesh->ofmeshes.size(); i++)
 	{
 		vector<ofIndexType> indices = mesh->ofmeshes[i].getIndices();
@@ -230,4 +234,24 @@ bool OrientedBoundingBox::intersect(Mesh* mesh)
 	}
 
 	return false;
+}
+
+bool OrientedBoundingBox::intersect(Triangle* tri)
+{
+	//create a temporary OBB that is transformed into the triangles parents space
+	glm::mat4 rInv = glm::inverse(tri->parent->getRotateMatrix());
+	OrientedBoundingBox temp;
+	temp.center = glm::inverse(tri->parent->getTranslateMatrix()) * glm::vec4(temp.center, 1);
+	temp.axes[0] = glm::normalize(rInv * glm::vec4(temp.axes[0], 1));
+	temp.axes[1] = glm::normalize(rInv * glm::vec4(temp.axes[1], 1));
+	temp.axes[2] = glm::normalize(rInv * glm::vec4(temp.axes[2], 1));
+
+	//get the vertices of the triangle
+	vector<ofIndexType> indices = tri->parent->ofmeshes[tri->meshNum].getIndices();
+	glm::vec3 v1 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
+	glm::vec3 v2 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
+	glm::vec3 v3 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
+
+	//check intersection
+	this->intersect(v1, v2, v3);
 }

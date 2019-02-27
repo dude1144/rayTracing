@@ -68,8 +68,8 @@ void ofApp::draw()
 		ofNoFill();
 
 		ofSetColor(ofColor::aquamarine);
-		b1.draw();
-
+		tree.draw();
+		ofFill();
 		ofSetColor(ofColor::lightSkyBlue);
 		renderCam.drawFrustum();
 		ofSetColor(ofColor::blue);
@@ -209,17 +209,8 @@ void ofApp::keyReleased(int key)
 	case 'T':
 	case 't':
 	{
-		for(int i = 0; i < scene.objects.size(); i++)
-		{
-			if (b1.intersect(scene.objects[i]))
-				cout << "OBB intersects: " << scene.objects[i]->name << endl;
-		}
-		for (int i = 0; i < scene.lights.size(); i++)
-		{
-			if (b1.intersect(scene.lights[i]))
-				cout << "OBB intersects: " << scene.lights[i]->name << endl;
-		}
-		cout << endl;
+		cout << "evaling scene" << endl;
+		tree.eval(scene.getAll());
 		break;
 	}
 	case OF_KEY_SHIFT:

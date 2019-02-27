@@ -13,6 +13,7 @@
 #include "renderCam.h"
 #include "light.h"
 #include "bounds.h"
+#include "Octree.h"
 
 class ofApp : public ofBaseApp {
 
@@ -63,8 +64,7 @@ public:
 	ofxButton addPlane;
 	ofxButton addLight;
 
-	OrientedBoundingBox b1 = OrientedBoundingBox(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1), 1, 1, 1);
-	glm::vec3 point = glm::vec3(0, 0, 0);
+	Octree tree = Octree(glm::vec3(-10, -10, -10), glm::vec3(10, 10, 10));
 #if _DEBUG // debug tools
 
 	ofxPanel debugPanel;
