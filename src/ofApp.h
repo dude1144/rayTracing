@@ -59,12 +59,17 @@ public:
 	SceneObject *selected;
 	Scene scene;
 
+	glm::vec3 repeat = glm::vec3(15, 15, 15);
+
 	ofxPanel addPanel;
 	ofxButton addSphere;
 	ofxButton addPlane;
 	ofxButton addLight;
 
 	Octree tree = Octree(glm::vec3(-10, -10, -10), glm::vec3(10, 10, 10));
+
+	OrientedBoundingBox box = OrientedBoundingBox(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1));
+
 #if _DEBUG // debug tools
 
 	ofxPanel debugPanel;

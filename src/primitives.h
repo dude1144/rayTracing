@@ -6,11 +6,18 @@
 #include "ofxAssimpModelLoader.h"
 #include "ofxGui.h"
 #include "material.h"
+#include "Octree.h"
 #include <limits>
 
-class Ray
+class Mesh;
+
+class Ray : public Intersectable
 {
 public:
+	glm::vec3 dir;
+//public:
+	glm::vec3 point;
+	
 	Ray(glm::vec3 p, glm::vec3 d) { this->point = p; this->dir = d; }
 	void draw(float t) { ofDrawLine(point, point + t * dir); }
 
@@ -19,8 +26,12 @@ public:
 		return (point + t * dir);
 	}
 
-	glm::vec3 point;
-	glm::vec3 dir;
+
+	void setDirection(glm::vec3 d)
+	{
+		dir = glm::normalize(d);
+	}
+	glm::vec3 getDir() { return dir; }	
 };
 
 class IntersectInfo
@@ -40,7 +51,7 @@ public:
 	}
 };
 
-class SceneObject
+class SceneObject : public Intersectable
 {
 public:
 	glm::vec3 position = glm::vec3(0, 0, 0);
@@ -59,7 +70,8 @@ public:
 
 	//point and normal save the point the ray intersects as well as the normal at that point
 	virtual bool intersect(const Ray &ray, IntersectInfo &intersect) { return false; }
-	virtual bool intersectView(const Ray &ray, IntersectInfo &intersect) { return false; }
+	virtual bool intersectView(const Ray &ray, IntersectInfo &intersect) { return this->intersect(ray, intersect); }
+	virtual float sdf(glm::vec3 &p) { return std::numeric_limits<float>::max(); }
 };
 
 class Sphere : public SceneObject
@@ -100,8 +112,9 @@ public:
 		this->setupUI();
 	}
 
-	bool intersect(const Ray &ray, IntersectInfo &intersect);
-	bool intersectView(const Ray &ray, IntersectInfo &intersect);
+	bool intersect(const Ray& ray, IntersectInfo &intersect) override;
+	bool intersect(const OrientedBoundingBox& box) override;
+	float sdf(glm::vec3 &p) override;
 
 
 	void draw()
@@ -158,8 +171,10 @@ public:
 	}
 
 	bool intersect(const Ray &ray, IntersectInfo &intersect);
+	bool intersect(const OrientedBoundingBox& box) override;
 	bool intersectView(const Ray &ray, IntersectInfo &intersect);
-
+	float sdf(glm::vec3 &p) override;
+	
 	void draw()
 	{
 		plane.setPosition(position);
@@ -210,11 +225,32 @@ class simpleMesh
 	void drawSolid();
 };
 
+class Triangle : public SceneObject
+{
+public:
+	Mesh* parent;
+	int meshNum;
+	int indices[3];
 
+	Triangle(Mesh* parent, int meshNum, int i1, int i2, int i3)
+	{
+		this->parent = parent;
+		this->meshNum = meshNum;
+		indices[0] = i1;
+		indices[1] = i2;
+		indices[2] = i3;
+	}
+
+	bool intersect(const OrientedBoundingBox& box) override;
+	void draw() {}
+	void updateFromUI() {}
+};
 
 class Mesh : public SceneObject
 {
 public:
+	
+
 	vector<ofMesh> ofmeshes;
 	vector<simpleMesh> meshes;
 	ofxToggle smooth;
@@ -231,7 +267,7 @@ public:
 
 
 	bool intersect(const Ray &ray, IntersectInfo &intersect);
-	bool intersectView(const Ray &ray, IntersectInfo &intersect);
+	bool intersect(const OrientedBoundingBox& box) override;
 
 	glm::mat4 getRotateMatrix() 
 	{
@@ -290,8 +326,9 @@ public:
 		mat.specularColor = mat.specularInput;
 	}
 
-	void  getTris(vector<SceneObject*>* vec)
+	vector<Triangle*> getTris()
 	{
+		vector<Triangle*> tris;
 		for (int i = 0; i < this->ofmeshes.size(); i++)
 		{
 			vector<ofIndexType> indices = this->ofmeshes[i].getIndices();
@@ -302,9 +339,10 @@ public:
 				glm::vec3 v2 = this->ofmeshes[i].getVertices()[indices[j + 1]];
 				glm::vec3 v3 = this->ofmeshes[i].getVertices()[indices[j + 2]];
 
-				vec->push_back(new Triangle(this, i, j, j+1, j+2));
+				tris.push_back(new Triangle(this, i, j, j+1, j+2));
 			}
 		}
+		return tris;
 	}
 
 private:
@@ -312,29 +350,4 @@ private:
 	void setupUI();
 };
 
-class Triangle : public SceneObject
-{
-public:
-	Mesh* parent;
-	int meshNum;
-	int indices[3];
 
-	Triangle(Mesh* parent, int meshNum, int i1, int i2, int i3)
-	{
-		this->parent = parent;
-		this->meshNum = meshNum;
-		indices[0] = i1;
-		indices[1] = i2;
-		indices[2] = i3;
-	}
-
-	void draw()
-	{
-
-	}
-
-	void updateFromUI()
-	{
-
-	}
-};

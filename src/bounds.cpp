@@ -9,7 +9,7 @@ void OrientedBoundingBox::draw()
 //implemented from seperating axis theorem, found in 
 //the paper Dynamic Collision Detection by David Eberly,
 //found at https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
-bool OrientedBoundingBox::intersect(OrientedBoundingBox *box)
+bool OrientedBoundingBox::intersectOBB(OrientedBoundingBox *box) const
 {
 	for (int i = 0; i < 3; i++)
 	{
@@ -57,7 +57,7 @@ bool OrientedBoundingBox::intersect(OrientedBoundingBox *box)
 //implemented from seperating axis theorem, found in 
 //the paper Dynamic Collision Detection by David Eberly,
 //found at https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
-bool OrientedBoundingBox::intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
+bool OrientedBoundingBox::intersectTriangle(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) const
 {
 	glm::vec3 edges[3] = { p2 - p1, p3 - p1, edges[1] - edges[0]};
 	glm::vec3 normal= glm::normalize(glm::cross(edges[0], edges[1]));
@@ -133,7 +133,7 @@ bool OrientedBoundingBox::intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
 
 //intersect sphere by finding the closest point on the OBB then 
 //checking if the distance to that point is greater than the radius
-bool OrientedBoundingBox::intersect(glm::vec3 p1, float radius)
+bool OrientedBoundingBox::intersectSphere(glm::vec3 p1, float radius) const
 {
 	glm::vec3 closestPoint = center;
 	glm::vec3 dir = p1 - center;
@@ -157,7 +157,7 @@ bool OrientedBoundingBox::intersect(glm::vec3 p1, float radius)
 }
 
 //intersection of OBB with plane using seperating axis theorem
-bool OrientedBoundingBox::intersect(glm::vec3 p1, glm::vec3 normal)
+bool OrientedBoundingBox::intersectPlane(glm::vec3 p1, glm::vec3 normal) const
 {
 	float interval = this->extents[0] * abs(glm::dot(normal, this->axes[0])) + 
 					 this->extents[1] * abs(glm::dot(normal, this->axes[1])) +
@@ -167,7 +167,7 @@ bool OrientedBoundingBox::intersect(glm::vec3 p1, glm::vec3 normal)
 	return distance <= interval;
 }
 
-bool OrientedBoundingBox::contains(glm::vec3 point)
+bool OrientedBoundingBox::contains(glm::vec3 point) const
 {
 	glm::vec3 p1 = point - this->center;
 
@@ -181,77 +181,125 @@ bool OrientedBoundingBox::contains(glm::vec3 point)
 	return true;
 }
 
+//implemented from Game Physics Cookbook
+//https://github.com/gszauer/GamePhysicsCookbook
+bool OrientedBoundingBox::intersectRay(glm::vec3 point, glm::vec3 dir) const
+{
+	glm::vec3 p = this->center - point;
+	glm::vec3 f = glm::vec3(glm::dot(this->axes[0], dir), glm::dot(this->axes[1], dir), glm::dot(this->axes[2], dir));
+	glm::vec3 e = glm::vec3(glm::dot(this->axes[0], p), glm::dot(this->axes[1], p), glm::dot(this->axes[2], p));
 
-//determine which intersect to call if a generic pointer is passed
-bool OrientedBoundingBox::intersect(SceneObject* object)
-{
-	if (dynamic_cast<Mesh*>(object))
-		return intersect(dynamic_cast<Mesh*>(object));
-	else if (dynamic_cast<Sphere*>(object))
-		return intersect(dynamic_cast<Sphere*>(object));
-	else if (dynamic_cast<Plane*>(object))
-		return intersect(dynamic_cast<Plane*>(object));
-	else if (dynamic_cast<Light*>(object))
-		return intersect(dynamic_cast<Light*>(object));
-}
+	float t[6];
 
-bool OrientedBoundingBox::intersect(Sphere* sphere)
-{
-	return intersect(sphere->position, sphere->radius);
-}
-bool OrientedBoundingBox::intersect(Plane* plane)
-{
-	return intersect(plane->position, plane->normal);
-}
-bool OrientedBoundingBox::intersect(Light* light)
-{
-	return contains(light->position);
-}
-bool OrientedBoundingBox::intersect(Mesh* mesh)
-{
-	//create a temporary OBB that is transformed into the meshs space
-	glm::mat4 rInv = glm::inverse(mesh->getRotateMatrix());
-	OrientedBoundingBox temp;
-	temp.center = glm::inverse(mesh->getTranslateMatrix()) * glm::vec4(temp.center, 1);
-	temp.axes[0] = glm::normalize(rInv * glm::vec4(temp.axes[0], 1));
-	temp.axes[1] = glm::normalize(rInv * glm::vec4(temp.axes[1], 1));
-	temp.axes[2] = glm::normalize(rInv * glm::vec4(temp.axes[2], 1));
-	
-	//iterate through all the meshes, checking every triangle
-	for (int i = 0; i < mesh->ofmeshes.size(); i++)
+	for (int i = 0; i < 3; i++)
 	{
-		vector<ofIndexType> indices = mesh->ofmeshes[i].getIndices();
-
-		for (int j = 0; j < indices.size(); j += 3)
+		if (f[i] == 0)
 		{
-			glm::vec3 v1 = mesh->ofmeshes[i].getVertices()[indices[j]];
-			glm::vec3 v2 = mesh->ofmeshes[i].getVertices()[indices[j + 1]];
-			glm::vec3 v3 = mesh->ofmeshes[i].getVertices()[indices[j + 2]];
-
-			if (this->intersect(v1, v2, v3))
-				return true;
+			if (-1 * e[i] - extents[i] > 0 || -1 * e[i] + extents[0] > 0)
+				return false;
+			f[i] = .0000001;
 		}
+		t[i * 2 + 0] = (e[i] + extents[i]) / f[i];
+		t[i * 2 + 1] = (e[i] - extents[i]) / f[i];
 	}
 
-	return false;
+	float tMin = fmaxf(fmaxf(fminf(t[0], t[1]), fminf(t[2], t[3])), fminf(t[4], t[5]));
+	float tMax = fminf(fminf(fmaxf(t[0], t[1]), fmaxf(t[2], t[3])), fmaxf(t[4], t[5]));
+
+	if (tMax < 0 || tMin > tMax)
+		return false;
+
+	if (tMin < 0)
+		return tMax;
+
+	return tMin;
 }
 
-bool OrientedBoundingBox::intersect(Triangle* tri)
+bool OrientedBoundingBox::intersect(Intersectable* toIntersect) const
 {
-	//create a temporary OBB that is transformed into the triangles parents space
-	glm::mat4 rInv = glm::inverse(tri->parent->getRotateMatrix());
-	OrientedBoundingBox temp;
-	temp.center = glm::inverse(tri->parent->getTranslateMatrix()) * glm::vec4(temp.center, 1);
-	temp.axes[0] = glm::normalize(rInv * glm::vec4(temp.axes[0], 1));
-	temp.axes[1] = glm::normalize(rInv * glm::vec4(temp.axes[1], 1));
-	temp.axes[2] = glm::normalize(rInv * glm::vec4(temp.axes[2], 1));
-
-	//get the vertices of the triangle
-	vector<ofIndexType> indices = tri->parent->ofmeshes[tri->meshNum].getIndices();
-	glm::vec3 v1 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
-	glm::vec3 v2 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
-	glm::vec3 v3 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
-
-	//check intersection
-	this->intersect(v1, v2, v3);
+	return toIntersect->intersect(*this);
 }
+
+
+//determine which intersect to call if a generic pointer is passed
+//bool OrientedBoundingBox::intersect(SceneObject* object)
+//{
+//	if (dynamic_cast<Mesh*>(object))
+//		return intersect(dynamic_cast<Mesh*>(object));
+//	else if (dynamic_cast<Sphere*>(object))
+//		return intersect(dynamic_cast<Sphere*>(object));
+//	else if (dynamic_cast<Plane*>(object))
+//		return intersect(dynamic_cast<Plane*>(object));
+//	else if (dynamic_cast<Light*>(object))
+//		return intersect(dynamic_cast<Light*>(object));
+//}
+//
+//bool OrientedBoundingBox::intersect(Sphere* sphere)
+//{
+//	return intersect(sphere->position, sphere->radius);
+//}
+//bool OrientedBoundingBox::intersect(Plane* plane)
+//{
+//	return intersect(plane->position, plane->normal);
+//}
+//bool OrientedBoundingBox::intersect(Light* light)
+//{
+//	return contains(light->position);
+//}
+//bool OrientedBoundingBox::intersect(Mesh* mesh)
+//{
+//	//create a temporary OBB that is transformed into the meshs space
+//	glm::mat4 rInv = glm::inverse(mesh->getRotateMatrix());
+//	OrientedBoundingBox temp;
+//	temp.center = glm::inverse(mesh->getTranslateMatrix()) * glm::vec4(this->center, 1);
+//	/*temp.axes[0] = glm::normalize(rInv * glm::vec4(this->axes[0], 1));
+//	temp.axes[1] = glm::normalize(rInv * glm::vec4(this->axes[1], 1));
+//	temp.axes[2] = glm::normalize(rInv * glm::vec4(this->axes[2], 1));*/
+//	temp.extents[0] = this->extents[0];
+//	temp.extents[1] = this->extents[1];
+//	temp.extents[2] = this->extents[2];
+//	
+//	//iterate through all the meshes, checking every triangle
+//	for (int i = 0; i < mesh->ofmeshes.size(); i++)
+//	{
+//		vector<ofIndexType> indices = mesh->ofmeshes[i].getIndices();
+//
+//		for (int j = 0; j < indices.size(); j += 3)
+//		{
+//			glm::vec3 v1 = mesh->ofmeshes[i].getVertices()[indices[j]];
+//			glm::vec3 v2 = mesh->ofmeshes[i].getVertices()[indices[j + 1]];
+//			glm::vec3 v3 = mesh->ofmeshes[i].getVertices()[indices[j + 2]];
+//
+//			if (temp.intersect(v1, v2, v3))
+//				return true;
+//		}
+//	}
+//
+//	return false;
+//}
+//bool OrientedBoundingBox::intersect(Triangle* tri)
+//{
+//	//create a temporary OBB that is transformed into the meshs space
+//	glm::mat4 rInv = glm::inverse(tri->parent->getRotateMatrix());
+//	OrientedBoundingBox temp;
+//	temp.center = glm::inverse(tri->parent->getTranslateMatrix()) * glm::vec4(this->center, 1);
+//	/*temp.axes[0] = glm::normalize(rInv * glm::vec4(this->axes[0], 1));
+//	temp.axes[1] = glm::normalize(rInv * glm::vec4(this->axes[1], 1));
+//	temp.axes[2] = glm::normalize(rInv * glm::vec4(this->axes[2], 1));*/
+//	temp.extents[0] = this->extents[0];
+//	temp.extents[1] = this->extents[1];
+//	temp.extents[2] = this->extents[2];
+//
+//	//get the vertices of the triangle
+//	vector<ofIndexType> indices = tri->parent->ofmeshes[tri->meshNum].getIndices();
+//	glm::vec3 v1 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
+//	glm::vec3 v2 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
+//	glm::vec3 v3 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
+//
+//	//check intersection
+//	return temp.intersect(v1, v2, v3);
+//}
+//bool intersect(Ray r)
+//{
+//
+//}

@@ -8,15 +8,11 @@
 #include "scene.h"
 #include "viewPlane.h"
 #include "light.h"
-#include <vector>
 #include <queue>
 #include <iostream>
-#include <cmath>
 #include <chrono>
 #include <thread>
 #include <mutex>
-#include <future>
-#include <atomic>
 
 
 //  render camera  - currently must be z axis aligned (we will improve this in project 4)
@@ -48,7 +44,9 @@ public:
 	void drawFrustum();
 	glm::vec3 screenToWorld(float u, float v) { return view.toWorld(u, v); }
 
-	void renderImage(Scene scene, ofImage *image, bool antiAlias, bool multiThread);       //render the image
+	void rayMarchImage(Scene scene, ofImage* image, bool multiThread, glm::vec3 repeat = glm::vec3(0,0,0));
+	void renderImage(Scene* scene, ofImage *image, bool antiAlias, bool multiThread);       //render the image
+	
 
 	glm::vec3 aim;
 	ViewPlane view;          // The camera viewplane, this is the view that we will render
@@ -60,14 +58,12 @@ public:
 	int numDivisions = 4;
 
 private:
-	void renderImagePiece(Scene scene, ofImage *image, int startWidth, int startHeight, int endWidth, int endHeight, bool antiAlias);
+	void renderImagePiece(Scene* scene, ofImage *image, int startWidth, int startHeight, int endWidth, int endHeight, bool antiAlias);
 	ofColor averageColors(vector<ofColor> colors);
-	ofColor getColor(Scene scene, float u, float v);
-	ofColor lambertian(SceneObject *obj, Light *light, IntersectInfo intersect);       //calculate lambertian color
-	ofColor blinn_phong(SceneObject *obj, Light *light, IntersectInfo intersect);      //calculate Blinn-Phong color
-	void lambertian_t(ofColor col, SceneObject *obj, Light *light, IntersectInfo intersect);       //calculate lambertian color
-	void blinn_phong_t(ofColor col, SceneObject *obj, Light *light, IntersectInfo intersect);      //calculate Blinn-Phong color
-	bool inShadow(vector<SceneObject*> objects, Light *light, IntersectInfo intersect);//determine if point is in a shadow
+	ofColor getColor(Scene* scene, float u, float v);
+	ofColor lambertian(SceneObject* obj, Light* light, IntersectInfo* intersect);       //calculate lambertian color
+	ofColor blinn_phong(SceneObject* obj, Light* light, IntersectInfo* intersect);      //calculate Blinn-Phong color
+	bool inShadow(vector<SceneObject*> objects, Light *light, IntersectInfo* intersect);//determine if point is in a shadow
 
 	std::mutex writeLock;
 	std::mutex popLock;

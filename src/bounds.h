@@ -1,8 +1,14 @@
 #pragma once
 
 #include "ofMain.h"
-#include "primitives.h"
-#include "light.h"
+
+class OrientedBoundingBox;
+
+class Intersectable
+{
+public:
+	virtual bool intersect(const OrientedBoundingBox& box) { return false; }
+};
 
 class boundingBox
 {
@@ -78,19 +84,22 @@ public:
 	}
 
 	void draw();
-	bool intersect(OrientedBoundingBox *box);
-	bool intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
-	bool intersect(glm::vec3 p1, float radius);
-	bool intersect(glm::vec3 p1, glm::vec3 normal);
-	
-	bool contains(glm::vec3 p1);
+	bool intersectOBB(OrientedBoundingBox *box) const;
+	bool intersectTriangle(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) const;
+	bool intersectSphere(glm::vec3 p1, float radius) const;
+	bool intersectPlane(glm::vec3 p1, glm::vec3 normal) const;
+	bool intersectRay(glm::vec3 point, glm::vec3 dir) const;
+	bool contains(glm::vec3 p1) const;
 
-	bool intersect(SceneObject* object);
+	bool intersect(Intersectable* toIntersect) const;
+
+	/*bool intersect(SceneObject* object);
 	bool intersect(Sphere* sphere);
 	bool intersect(Plane* plane);
 	bool intersect(Mesh* mesh);
 	bool intersect(Triangle* mesh);
 	bool intersect(Light* light);
+	bool intersect(Ray r);*/
 };
 
 class AxisAlignedBoundingBox 

@@ -1,11 +1,11 @@
 #include "primitives.h"
 
-//Count initilizations
+//----------------------------------------------Count initilizations------------------------------------------------------------
 int Sphere::count = 0;
 int Plane::count = 0;
 int Mesh::count = 0;
 
-//UI Setups
+//----------------------------------------------------UI Setups-----------------------------------------------------------------
 void Sphere::setupUI()
 {
 	settings.setup(name);
@@ -46,20 +46,9 @@ void Mesh::setupUI()
 }
 
 
-//Intersection methods
-bool Sphere::intersect(const Ray &ray, IntersectInfo &intersect)
-{
-	//check for intersection and save point and normal into intersect
-	if (glm::intersectRaySphere(ray.point, ray.dir, position, radius, intersect.point, intersect.normal))
-	{
-		//if intersection happened, calculate the distance and return true
-		intersect.dist = glm::length(intersect.point - ray.point);
-		return true;
-	}
-	return false;
-}
+//-------------------------------------------Ray-Intersection methods-----------------------------------------------------------
 
-bool Sphere::intersectView(const Ray &ray, IntersectInfo &intersect)
+bool Sphere::intersect(const Ray &ray, IntersectInfo &intersect)
 {
 	//check for intersection and save point and normal into intersect
 	if (glm::intersectRaySphere(ray.point, ray.dir, position, radius, intersect.point, intersect.normal))
@@ -80,32 +69,6 @@ bool Plane::intersect(const Ray &ray, IntersectInfo &intersect)
 		intersect.point = r.evalPoint(intersect.dist);
 		intersect.normal = glm::normalize(this->normal);
 
-		return true;
-	}
-	return false;
-}
-
-bool Plane::intersectView(const Ray &ray, IntersectInfo &intersect)
-{
-	glm::vec3 p1 = glm::vec3((0 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2));
-	glm::vec3 p2 = glm::vec3((0 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2));
-	glm::vec3 p3 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2));
-	glm::vec3 p4 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2));
-
-	if( intersectRayTriangle(ray.point, ray.dir, p1, p2, p3, intersect.barry) ) 
-	{
-		intersect.barry.z = 1 - (intersect.barry.x + intersect.barry.y);
-		intersect.point = (p1 * intersect.barry.z) + (p2 * intersect.barry.x) + (p3 * intersect.barry.y);
-		intersect.dist = glm::length(intersect.point - ray.point);
-		intersect.normal = glm::normalize(this->normal);
-		return true;
-	}
-	else if ( intersectRayTriangle(ray.point, ray.dir, p1, p3, p4, intersect.barry) )
-	{
-		intersect.barry.z = 1 - (intersect.barry.x + intersect.barry.y);
-		intersect.point = (p1 * intersect.barry.z) + (p3 * intersect.barry.x) + (p4 * intersect.barry.y);
-		intersect.dist = glm::length(intersect.point - ray.point);
-		intersect.normal = glm::normalize(this->normal);
 		return true;
 	}
 	return false;
@@ -161,10 +124,108 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 		return false;
 }
 
-bool Mesh::intersectView(const Ray &ray, IntersectInfo &intersect)
+bool Plane::intersectView(const Ray &ray, IntersectInfo &intersect)
 {
-	return this->intersect(ray, intersect);
+	glm::vec3 p1 = glm::vec3((0 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2));
+	glm::vec3 p2 = glm::vec3((0 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2));
+	glm::vec3 p3 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2));
+	glm::vec3 p4 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2));
+
+	if( intersectRayTriangle(ray.point, ray.dir, p1, p2, p3, intersect.barry) ) 
+	{
+		intersect.barry.z = 1 - (intersect.barry.x + intersect.barry.y);
+		intersect.point = (p1 * intersect.barry.z) + (p2 * intersect.barry.x) + (p3 * intersect.barry.y);
+		intersect.dist = glm::length(intersect.point - ray.point);
+		intersect.normal = glm::normalize(this->normal);
+		return true;
+	}
+	else if ( intersectRayTriangle(ray.point, ray.dir, p1, p3, p4, intersect.barry) )
+	{
+		intersect.barry.z = 1 - (intersect.barry.x + intersect.barry.y);
+		intersect.point = (p1 * intersect.barry.z) + (p3 * intersect.barry.x) + (p4 * intersect.barry.y);
+		intersect.dist = glm::length(intersect.point - ray.point);
+		intersect.normal = glm::normalize(this->normal);
+		return true;
+	}
+	return false;
 }
+
+//--------------------------------------------------SDFs------------------------------------------------------------------------
+float Sphere::sdf(glm::vec3 &p)
+{
+	return glm::length(p - this->position) - this->radius;
+}
+
+float Plane::sdf(glm::vec3 &p)
+{
+	return abs(glm::dot(normal, p - this->position));
+}
+
+//--------------------------------------------------Octree Intersects-----------------------------------------------------------
+
+bool Sphere::intersect(const OrientedBoundingBox& box)
+{
+	return box.intersectSphere(this->position, this->radius);
+}
+bool Plane::intersect(const OrientedBoundingBox& box)
+{
+	return box.intersectPlane(this->position, this->normal);
+}
+bool Triangle::intersect(const OrientedBoundingBox& box)
+{
+	//create a temporary OBB that is transformed into the meshs space
+	glm::mat4 rInv = glm::inverse(this->parent->getRotateMatrix());
+	OrientedBoundingBox temp;
+	temp.center = glm::inverse(this->parent->getTranslateMatrix()) * glm::vec4(box.center, 1);
+	/*temp.axes[0] = glm::normalize(rInv * glm::vec4(this->axes[0], 1));
+	temp.axes[1] = glm::normalize(rInv * glm::vec4(this->axes[1], 1));
+	temp.axes[2] = glm::normalize(rInv * glm::vec4(this->axes[2], 1));*/
+	temp.extents[0] = box.extents[0];
+	temp.extents[1] = box.extents[1];
+	temp.extents[2] = box.extents[2];
+
+	//get the vertices of the triangle
+	vector<ofIndexType> indices = this->parent->ofmeshes[this->meshNum].getIndices();
+	glm::vec3 v1 = this->parent->ofmeshes[this->meshNum].getVertices()[this->indices[0]];
+	glm::vec3 v2 = this->parent->ofmeshes[this->meshNum].getVertices()[this->indices[0]];
+	glm::vec3 v3 = this->parent->ofmeshes[this->meshNum].getVertices()[this->indices[0]];
+
+	//check intersection
+	return temp.intersectTriangle(v1, v2, v3);
+}
+bool Mesh::intersect(const OrientedBoundingBox& box)
+{
+	//create a temporary OBB that is transformed into the meshs space
+	glm::mat4 rInv = glm::inverse(this->getRotateMatrix());
+	OrientedBoundingBox temp;
+	temp.center = glm::inverse(this->getTranslateMatrix()) * glm::vec4(box.center, 1);
+	/*temp.axes[0] = glm::normalize(rInv * glm::vec4(this->axes[0], 1));
+	temp.axes[1] = glm::normalize(rInv * glm::vec4(this->axes[1], 1));
+	temp.axes[2] = glm::normalize(rInv * glm::vec4(this->axes[2], 1));*/
+	temp.extents[0] = box.extents[0];
+	temp.extents[1] = box.extents[1];
+	temp.extents[2] = box.extents[2];
+
+	//iterate through all the meshes, checking every triangle
+	for (int i = 0; i < this->ofmeshes.size(); i++)
+	{
+		vector<ofIndexType> indices = this->ofmeshes[i].getIndices();
+
+		for (int j = 0; j < indices.size(); j += 3)
+		{
+			glm::vec3 v1 = this->ofmeshes[i].getVertices()[indices[j]];
+			glm::vec3 v2 = this->ofmeshes[i].getVertices()[indices[j + 1]];
+			glm::vec3 v3 = this->ofmeshes[i].getVertices()[indices[j + 2]];
+
+			if (temp.intersectTriangle(v1, v2, v3))
+				return true;
+		}
+	}
+
+	return false;
+}
+
+
 
 bool Mesh::load(std::string name)
 {

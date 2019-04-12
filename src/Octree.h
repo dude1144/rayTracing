@@ -3,7 +3,7 @@
 #include <vector>
 #include "bounds.h"
 
-#define MAX_LEAF_OBJECTS 3
+#define MAX_LEAF_OBJECTS 2
 
 class Octree
 {
@@ -14,7 +14,7 @@ private:
 		OctreeNode* octants[8];
 		OctreeNode* parent;
 		OrientedBoundingBox bounds;
-		vector<SceneObject*> objects;
+		vector<Intersectable*> objects;
 		glm::vec3 min;
 		glm::vec3 max;
 		bool isLeaf;
@@ -56,7 +56,7 @@ private:
 				}
 		}
 
-		void eval(vector<SceneObject*> scene)
+		void eval(vector<Intersectable*> scene)
 		{
 			for (int i = 0; i < scene.size(); i++)
 			{
@@ -119,6 +119,10 @@ private:
 	}
 public:
 	
+	Octree()
+	{
+		root = OctreeNode(glm::vec3(-10, -10, 10), glm::vec3(10, 10, -10), nullptr);
+	}
 	Octree(glm::vec3 min, glm::vec3 max)
 	{
 		root = OctreeNode(min, max, nullptr);
@@ -134,7 +138,7 @@ public:
 		root.clear();
 	}
 
-	void eval(vector<SceneObject*> scene)
+	void eval(vector<Intersectable*> scene)
 	{
 		this->clear();
 		queue<OctreeNode*> toEval;

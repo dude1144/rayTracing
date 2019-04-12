@@ -1,33 +1,57 @@
 #include "scene.h"
 
 
-vector<SceneObject*> Scene::getAll()
+//void Scene::meshToTri(vector<SceneObject*> obj)
+//{
+//	for (int i = 0; i < obj.size(); i++)
+//	{
+//		if (dynamic_cast<Mesh*>(obj[i]))
+//		{
+//			dynamic_cast<Mesh*>(obj[i])->getTris(&obj);
+//			obj.erase(obj.begin() + i);
+//			i--;
+//		}
+//	}
+//}
+
+vector<Intersectable*> Scene::getIntersectablesMeshAsTris()
 {
-	vector<SceneObject*> all = objects;
-	for (int i = 0; i < lights.size(); i++)
+	vector<Intersectable*> intersectables;
+	for (int i = 0; i < objects.size(); i++)
 	{
-		all.push_back(lights[i]);
+		if (dynamic_cast<Intersectable*>(objects[i]))
+		{
+			if (dynamic_cast<Mesh*>(objects[i]))
+			{
+				dynamic_cast<Mesh*>(objects[i])->getTris();
+			}
+			else
+				intersectables.push_back(dynamic_cast<Intersectable*>(objects[i]));
+		}
 	}
-	return all;
+	return intersectables;
+}
+
+vector<Intersectable*> Scene::getIntersectables()
+{
+	vector<Intersectable*> intersectables;
+	for (int i = 0; i < objects.size(); i++)
+	{
+		if (dynamic_cast<Intersectable*>(objects[i]))
+		{
+			intersectables.push_back(dynamic_cast<Intersectable*>(objects[i]));
+		}
+	}
+	return intersectables;
 }
 
 void Scene::setupTree()
 {
-	vector<SceneObject*> obj = this->getAll();
-	for (int i = 0; i < obj.size(); i++)
-	{
-		if (dynamic_cast<Mesh*>(obj[i]))
-		{
-			dynamic_cast<Mesh*>(obj[i])->getTris(&obj);
-			obj.erase(obj.begin() + i);
-			i--;
-		}
-	}
-	tree = Octree(glm::vec3(-50, -50, 50), glm::vec3(50, 50, -50));
-	tree.eval(obj);
+	tree = Octree(glm::vec3(-20, -20, 20), glm::vec3(20, 20, -20));
+	tree.eval(this->getIntersectablesMeshAsTris());
 }
 
-SceneObject * Scene::intersect(const Ray & ray, IntersectInfo &intersect)
+SceneObject* Scene::intersect(const Ray& ray, IntersectInfo& intersect)
 {
 	IntersectInfo closest;
 	int index = -1;
@@ -48,6 +72,60 @@ SceneObject * Scene::intersect(const Ray & ray, IntersectInfo &intersect)
 		intersect = closest;
 		return objects[index];
 	}
+}
+
+SceneObject* Scene::rayMarch(Ray r, IntersectInfo &intersect, glm::vec3 repeat)
+{
+	int index = -1;
+	float dist = sceneSDF(r.point, index, repeat);
+
+	for(int i = 0; i < MAX_STEPS; i++)
+	{
+		if (dist <= HIT_DIST)
+		{
+			//cout << "hit!" << endl;
+			SceneObject* obj = this->objects[index];
+			if(repeat == glm::vec3(0,0,0))
+				intersect.point = r.evalPoint(dist);
+			else
+			{
+				glm::vec3 p = r.evalPoint(dist);
+				intersect.point = glm::vec3(std::fmod(p.x, repeat.x), std::fmod(p.y, repeat.y), std::fmod(p.z, repeat.z)) -.5 * repeat;
+			}
+			intersect.normal.x = obj->sdf(intersect.point + glm::vec3(EPS, 0, 0)) - obj->sdf(intersect.point - glm::vec3(EPS, 0, 0));
+			intersect.normal.y = obj->sdf(intersect.point + glm::vec3(0, EPS, 0)) - obj->sdf(intersect.point - glm::vec3(0, EPS, 0));
+			intersect.normal.z = obj->sdf(intersect.point + glm::vec3(0, 0, EPS)) - obj->sdf(intersect.point - glm::vec3(0, 0, EPS));
+			return obj;
+		}
+		if (dist >= MISS_DIST)
+		{
+			return nullptr;
+		}
+		r.point = r.evalPoint(dist);
+		dist = sceneSDF(r.point, index, repeat);
+	}
+	return nullptr;
+}
+
+float Scene::sceneSDF(glm::vec3 &p, int &index, glm::vec3 repeat)
+{
+	float closest = std::numeric_limits<float>::max();
+	glm::vec3 point = p;
+	if (repeat != glm::vec3(0, 0, 0))
+	{
+		point = glm::vec3(std::fmod(p.x, repeat.x), std::fmod(p.y, repeat.y), std::fmod(p.z, repeat.z)) -.5*repeat;
+	}
+
+	for (int i = 0; i < objects.size(); i++)
+	{
+		float dist = objects[i]->sdf(point);
+		if (dist < closest)
+		{
+			closest = dist;
+			index = i;
+		}
+	}
+	return closest;
 }
 
 bool Scene::remove(SceneObject* obj)

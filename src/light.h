@@ -1,7 +1,6 @@
 //Austin Anderson
 //010640955
 #pragma once
-#include "ofMain.h"
 #include "primitives.h"
 
 class Light : public SceneObject
