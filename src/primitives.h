@@ -259,7 +259,7 @@ public:
 	{
 		this->name = "Mesh" + std::to_string(count);
 		count++;
-		smooth = false;
+		smooth = true;
 
 		this->load(name);
 		this->setupUI();
