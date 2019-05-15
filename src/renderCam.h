@@ -65,6 +65,8 @@ private:
 	ofColor blinn_phong(SceneObject* obj, Light* light, IntersectInfo* intersect);      //calculate Blinn-Phong color
 	bool inShadow(vector<SceneObject*> objects, Light *light, IntersectInfo* intersect);//determine if point is in a shadow
 
+	int pieceCount;
+
 	std::mutex writeLock;
 	std::mutex popLock;
 	std::mutex colLock;

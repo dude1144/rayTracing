@@ -12,7 +12,7 @@ void ofApp::setup()
 	scene.add(new PointLight(glm::vec3(2, 3, 2), 10, ofColor(255,255,255)));
 	scene.add(new PointLight(glm::vec3(-4, 2, 4), 10, ofColor(255, 255, 255)));
 	
-	//image.allocate(1200, 800, OF_IMAGE_COLOR_ALPHA);
+	//image.allocate(2400, 1600, OF_IMAGE_COLOR_ALPHA);
 	image.allocate(600, 400, OF_IMAGE_COLOR_ALPHA);
 	//image.allocate(120, 80, OF_IMAGE_COLOR_ALPHA);
 	//image.allocate(60, 40, OF_IMAGE_COLOR_ALPHA);
@@ -113,8 +113,6 @@ void ofApp::draw()
 			scene.lights[i]->draw();
 		}
 
-		box.draw();
-
 		ofSetColor(ofColor::gray);
 		mainCam.drawFrustum();
 
@@ -186,10 +184,8 @@ void ofApp::keyReleased(int key)
 #if _DEBUG
 		renderCam.renderImage(&scene, &image, useAntiAliasing, useMultithreading);
 #else
-		renderCam.renderImage(scene, &image, true, false);
+		renderCam.renderImage(&scene, &image, false, false);
 #endif
-		image.save("render.png", OF_IMAGE_QUALITY_BEST);
-		image.load("render.png");
 		break;
 	case 'X':
 	case 'x':
@@ -212,7 +208,6 @@ void ofApp::keyReleased(int key)
 	case 't':
 		{
 			IntersectInfo info;
-			scene.rayMarch(renderCam.getRay(.5, .5), info, repeat);
 			//cout << "evaling scene" << endl;
 			//tree.eval(scene.getIntersectables());
 			break;

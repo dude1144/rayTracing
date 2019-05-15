@@ -1,4 +1,4 @@
-//Austin Anderson
+﻿//Austin Anderson
 //010640955
 #include "renderCam.h"
 
@@ -28,10 +28,8 @@ void RenderCam::drawFrustum()
 //render the scene
 void RenderCam::renderImage(Scene* scene, ofImage* image, bool antiAlias = false, bool multiThread = false)
 {
-#if _DEBUG
-	std::cout << "rendering with resolution: " << image->getWidth() << " x " << image->getHeight() << "\n";
+	std::cout << "rendering with resolution: " << image->getWidth() << " x " << image->getHeight() << "\n" << endl;
 	std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-#endif
 
 	if (multiThread)
 	{	
@@ -47,13 +45,15 @@ void RenderCam::renderImage(Scene* scene, ofImage* image, bool antiAlias = false
 				int endWidth = i + 16;
 				int endHeight = j + 16;
 				if (endWidth > image->getWidth())
-					endWidth = endWidth > image->getWidth();
+					endWidth = image->getWidth();
 				if (endHeight > image->getHeight())
 					endHeight = image->getHeight();
 
 				pieces.push(glm::vec4(i, j, endWidth, endHeight));
 			}
 		}
+		pieceCount = pieces.size();
+
 #if _DEBUG
 		std::cout << "number of Pieces: " << pieces.size() << endl;
 #endif
@@ -73,15 +73,25 @@ void RenderCam::renderImage(Scene* scene, ofImage* image, bool antiAlias = false
 
 					popLock.lock();
 					notEmpty = pieces.size() != 0;
+
+					cout << "\r[";
+					for (int j = 0; j < (int)(50 * ((pieceCount-pieces.size())/pieceCount)); j++)
+					{
+						cout << "|";
+					}
+					for (int j = 0; j < 50 - (int)(50 * ((pieceCount - pieces.size()) / pieceCount)); j++)
+					{
+						cout << "-";
+					}
+					cout << "]";
+
 					popLock.unlock();
 				}
 			}));
 
 			//set thread priority lower so that it doesn't inturrupt other tasks, removed if in release
-#if _DEBUG
 			SetThreadPriority(threads[threads.size() - 1].native_handle(), THREAD_MODE_BACKGROUND_BEGIN);
-			SetThreadPriority(threads[threads.size() - 1].native_handle(), -3);
-#endif
+			SetThreadPriority(threads[threads.size() - 1].native_handle(), -10);
 		}
 
 		//join all the threads
@@ -97,10 +107,12 @@ void RenderCam::renderImage(Scene* scene, ofImage* image, bool antiAlias = false
 		renderImagePiece(scene, image, 0, 0, image->getWidth(), image->getHeight(), antiAlias);
 	}
 
-#if _DEBUG
+
 	std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
-	cout << "done, rendered in " << std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / (float)1000000000 << " seconds" << endl;
-#endif
+	float time = std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / (float)1000000000;
+	cout << "done, rendered in " << time << " seconds" << endl;
+	image->save("render - [" + std::to_string((int)(image->getWidth())) + "x" + std::to_string((int)(image->getHeight())) + "] - " + std::to_string(time) + ".png", OF_IMAGE_QUALITY_BEST);
+	image->load("render.png");
 }
 void RenderCam::renderImagePiece(Scene* scene, ofImage *image, int startWidth, int startHeight, int endWidth, int endHeight, bool antiAlias)
 {

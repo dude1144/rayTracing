@@ -69,7 +69,7 @@ public:
 	Octree tree = Octree(glm::vec3(-10, -10, -10), glm::vec3(10, 10, 10));
 
 	AxisAlignedBoundingBox box = AxisAlignedBoundingBox(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1));
-
+	
 #if _DEBUG // debug tools
 
 	ofxPanel debugPanel;
