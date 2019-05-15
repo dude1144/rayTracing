@@ -3,11 +3,14 @@
 #include "ofMain.h"
 
 class OrientedBoundingBox;
+class AxisAlignedBoundingBox;
 
+//virtual class, marks object as intersectable and requires implementation of intersect methods
 class Intersectable
 {
 public:
 	virtual bool intersect(const OrientedBoundingBox& box) { return false; }
+	virtual bool intersect(const AxisAlignedBoundingBox& box) { return false; }
 };
 
 class boundingBox
@@ -92,52 +95,27 @@ public:
 	bool contains(glm::vec3 p1) const;
 
 	bool intersect(Intersectable* toIntersect) const;
-
-	/*bool intersect(SceneObject* object);
-	bool intersect(Sphere* sphere);
-	bool intersect(Plane* plane);
-	bool intersect(Mesh* mesh);
-	bool intersect(Triangle* mesh);
-	bool intersect(Light* light);
-	bool intersect(Ray r);*/
 };
 
 class AxisAlignedBoundingBox 
 {
 public:
-	glm::vec3 p1;
-	glm::vec3 p2;
+	glm::vec3 min;
+	glm::vec3 max;
 
-	AxisAlignedBoundingBox(glm::vec3 p1, glm::vec3 p2)
+	AxisAlignedBoundingBox(glm::vec3 min, glm::vec3 max)
 	{
-		this->p1 = p1;
-		this->p2 = p2;
+		this->min = min;
+		this->max = max;
 	}
 
-	bool intersect(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3)
-	{
+	glm::vec3 center() { return (this->min + this->max) / 2; }
 
-	}
-
-	bool intersect(AxisAlignedBoundingBox *box)
-	{
-		glm::vec3 center = (p1 + p2) / 2;
-		glm::vec3 boxCenter = (box->p1 + box->p2) / 2;
-
-		float widthx = abs(p1.x - center.x);
-		float widthy = abs(p1.y - center.y);
-		float widthz = abs(p1.z - center.z);
-		float boxwidthx = abs(box->p1.x - boxCenter.x);
-		float boxwidthy = abs(box->p1.y - boxCenter.y);
-		float boxwidthz = abs(box->p1.z - boxCenter.z);
-
-		if ((center.x - boxCenter.x) > (widthx + boxwidthx))
-			return false;
-		if ((center.y - boxCenter.y) > (widthy + boxwidthy))
-			return false;
-		if ((center.z - boxCenter.z) > (widthz + boxwidthz))
-			return false;
-
-		return true;
-	}
+	void draw();
+	bool intersectOBB(OrientedBoundingBox *box) const;
+	bool intersectTriangle(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) const;
+	bool intersectSphere(glm::vec3 p1, float radius) const;
+	bool intersectPlane(glm::vec3 p1, glm::vec3 normal) const;
+	bool intersectRay(glm::vec3 point, glm::vec3 dir) const;
+	bool contains(glm::vec3 p1) const;
 };

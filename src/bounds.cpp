@@ -1,5 +1,8 @@
 #include "bounds.h"
-#include "light.h"
+
+
+#define hitInterval 1000
+//-------------------------------------------------Oriented Bounding Box--------------------------------------------------------
 
 void OrientedBoundingBox::draw()
 {
@@ -167,6 +170,7 @@ bool OrientedBoundingBox::intersectPlane(glm::vec3 p1, glm::vec3 normal) const
 	return distance <= interval;
 }
 
+//check if box contains given point
 bool OrientedBoundingBox::contains(glm::vec3 point) const
 {
 	glm::vec3 p1 = point - this->center;
@@ -215,91 +219,78 @@ bool OrientedBoundingBox::intersectRay(glm::vec3 point, glm::vec3 dir) const
 	return tMin;
 }
 
+//intersect an intersectable by calling it's intersect(OrientedBoundingBox) method
 bool OrientedBoundingBox::intersect(Intersectable* toIntersect) const
 {
 	return toIntersect->intersect(*this);
 }
 
+//------------------------------------------------Axis-Aligned Bounding Box-----------------------------------------------------
 
-//determine which intersect to call if a generic pointer is passed
-//bool OrientedBoundingBox::intersect(SceneObject* object)
-//{
-//	if (dynamic_cast<Mesh*>(object))
-//		return intersect(dynamic_cast<Mesh*>(object));
-//	else if (dynamic_cast<Sphere*>(object))
-//		return intersect(dynamic_cast<Sphere*>(object));
-//	else if (dynamic_cast<Plane*>(object))
-//		return intersect(dynamic_cast<Plane*>(object));
-//	else if (dynamic_cast<Light*>(object))
-//		return intersect(dynamic_cast<Light*>(object));
-//}
-//
-//bool OrientedBoundingBox::intersect(Sphere* sphere)
-//{
-//	return intersect(sphere->position, sphere->radius);
-//}
-//bool OrientedBoundingBox::intersect(Plane* plane)
-//{
-//	return intersect(plane->position, plane->normal);
-//}
-//bool OrientedBoundingBox::intersect(Light* light)
-//{
-//	return contains(light->position);
-//}
-//bool OrientedBoundingBox::intersect(Mesh* mesh)
-//{
-//	//create a temporary OBB that is transformed into the meshs space
-//	glm::mat4 rInv = glm::inverse(mesh->getRotateMatrix());
-//	OrientedBoundingBox temp;
-//	temp.center = glm::inverse(mesh->getTranslateMatrix()) * glm::vec4(this->center, 1);
-//	/*temp.axes[0] = glm::normalize(rInv * glm::vec4(this->axes[0], 1));
-//	temp.axes[1] = glm::normalize(rInv * glm::vec4(this->axes[1], 1));
-//	temp.axes[2] = glm::normalize(rInv * glm::vec4(this->axes[2], 1));*/
-//	temp.extents[0] = this->extents[0];
-//	temp.extents[1] = this->extents[1];
-//	temp.extents[2] = this->extents[2];
-//	
-//	//iterate through all the meshes, checking every triangle
-//	for (int i = 0; i < mesh->ofmeshes.size(); i++)
-//	{
-//		vector<ofIndexType> indices = mesh->ofmeshes[i].getIndices();
-//
-//		for (int j = 0; j < indices.size(); j += 3)
-//		{
-//			glm::vec3 v1 = mesh->ofmeshes[i].getVertices()[indices[j]];
-//			glm::vec3 v2 = mesh->ofmeshes[i].getVertices()[indices[j + 1]];
-//			glm::vec3 v3 = mesh->ofmeshes[i].getVertices()[indices[j + 2]];
-//
-//			if (temp.intersect(v1, v2, v3))
-//				return true;
-//		}
-//	}
-//
-//	return false;
-//}
-//bool OrientedBoundingBox::intersect(Triangle* tri)
-//{
-//	//create a temporary OBB that is transformed into the meshs space
-//	glm::mat4 rInv = glm::inverse(tri->parent->getRotateMatrix());
-//	OrientedBoundingBox temp;
-//	temp.center = glm::inverse(tri->parent->getTranslateMatrix()) * glm::vec4(this->center, 1);
-//	/*temp.axes[0] = glm::normalize(rInv * glm::vec4(this->axes[0], 1));
-//	temp.axes[1] = glm::normalize(rInv * glm::vec4(this->axes[1], 1));
-//	temp.axes[2] = glm::normalize(rInv * glm::vec4(this->axes[2], 1));*/
-//	temp.extents[0] = this->extents[0];
-//	temp.extents[1] = this->extents[1];
-//	temp.extents[2] = this->extents[2];
-//
-//	//get the vertices of the triangle
-//	vector<ofIndexType> indices = tri->parent->ofmeshes[tri->meshNum].getIndices();
-//	glm::vec3 v1 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
-//	glm::vec3 v2 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
-//	glm::vec3 v3 = tri->parent->ofmeshes[tri->meshNum].getVertices()[tri->indices[0]];
-//
-//	//check intersection
-//	return temp.intersect(v1, v2, v3);
-//}
-//bool intersect(Ray r)
-//{
-//
-//}
+void AxisAlignedBoundingBox::draw()
+{
+	ofDrawBox(center(), 2 * abs(max.x - center().x), 2 * abs(max.y - center().y), 2 * abs(max.z - center().z));
+}
+
+bool AxisAlignedBoundingBox::intersectOBB(OrientedBoundingBox * box) const
+{
+	return false;
+}
+
+bool AxisAlignedBoundingBox::intersectTriangle(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) const
+{
+	return false;
+}
+
+bool AxisAlignedBoundingBox::intersectSphere(glm::vec3 p1, float radius) const
+{
+	return false;
+}
+
+bool AxisAlignedBoundingBox::intersectPlane(glm::vec3 p1, glm::vec3 normal) const
+{
+	return false;
+}
+
+/*
+ Ray-box intersection using IEEE numerical properties to ensure that the
+ test is both robust and efficient, as described in:
+ 
+      Amy Williams, Steve Barrus, R. Keith Morley, and Peter Shirley
+       "An Efficient and Robust Ray-Box Intersection Algorithm"
+       Journal of graphics tools, 10(1):49-54, 2005
+ 
+ */
+bool AxisAlignedBoundingBox::intersectRay(glm::vec3 point, glm::vec3 dir) const
+{
+	glm::vec3 params[2] = { min, max };
+	glm::vec3 invDir = glm::vec3(1 / dir.x, 1 / dir.y, 1 / dir.z);
+	int xSign = invDir.x < 0;
+	int ySign = invDir.y < 0;
+	int zSign = invDir.z < 0;
+
+	float tXMin = (params[xSign].x - point.x) * invDir.x;
+	float tXMax = (params[1 - xSign].x - point.x) * invDir.x;
+	float tYMin = (params[ySign].y - point.y) * invDir.y;
+	float tYMax = (params[1 - ySign].y - point.y) * invDir.y;
+	if (tXMin > tYMax || tYMin > tXMax)
+		return false;
+	if (tYMin > tXMin)
+		tXMin = tYMin;
+	if (tYMax < tXMax)
+		tXMax = tYMax;
+	float tZMin = (params[zSign].z - point.z) * invDir.z;
+	float tZMax = (params[1 - zSign].z - point.z) * invDir.z;
+	if ((tXMin > tZMax) || (tZMin > tXMax))
+		return false;
+	if (tZMin > tXMin)
+		tXMin = tZMin;
+	if (tZMax < tXMax)
+		tXMax = tZMax;
+	return ((tXMin < hitInterval) && (tXMax > -hitInterval));
+}
+
+bool AxisAlignedBoundingBox::contains(glm::vec3 p1) const
+{
+	return false;
+}

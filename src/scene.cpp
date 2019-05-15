@@ -16,8 +16,9 @@
 
 vector<Intersectable*> Scene::getIntersectablesMeshAsTris()
 {
+	
 	vector<Intersectable*> intersectables;
-	for (int i = 0; i < objects.size(); i++)
+	/*for (int i = 0; i < objects.size(); i++)
 	{
 		if (dynamic_cast<Intersectable*>(objects[i]))
 		{
@@ -28,7 +29,7 @@ vector<Intersectable*> Scene::getIntersectablesMeshAsTris()
 			else
 				intersectables.push_back(dynamic_cast<Intersectable*>(objects[i]));
 		}
-	}
+	}*/
 	return intersectables;
 }
 

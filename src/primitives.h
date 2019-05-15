@@ -8,8 +8,9 @@
 #include "material.h"
 #include "Octree.h"
 #include <limits>
+#include <chrono>
 
-class Mesh;
+class Triangle;
 
 class Ray : public Intersectable
 {
@@ -84,7 +85,7 @@ public:
 
 	Sphere()
 	{
-		name = "Sphere" + count;
+		name = "Sphere" + std::to_string(count);
 		count++;
 		this->setupUI();
 		
@@ -95,7 +96,7 @@ public:
 		radius = r;
 		mat.setDiffuseColor(col);
 
-		name = "Sphere" + count;
+		name = "Sphere" + std::to_string(count);
 		count++;
 		this->setupUI();
 	}
@@ -107,7 +108,7 @@ public:
 		mat.setSpecularColor(specCol);
 		mat.setP(p);
 
-		name = "Sphere" + count;
+		name = "Sphere" + std::to_string(count);
 		count++;
 		this->setupUI();
 	}
@@ -149,7 +150,7 @@ public:
 
 	Plane() 
 	{ 
-		name = "Plane" + count;
+		name = "Plane" + std::to_string(count);
 		count++;
 		normal = glm::vec3(0, 1, 0);
 		plane.rotateDeg(90, 1, 0, 0);
@@ -165,7 +166,7 @@ public:
 		mat.specularColor = spec;
 		plane.rotateDeg(90, 1, 0, 0);
 
-		name = "Plane" + count;
+		name = "Plane" + std::to_string(count);
 		count++;
 		this->setupUI();
 	}
@@ -213,46 +214,13 @@ private:
 	void setupUI();
 };
 
-class simpleMesh
-{
-	vector<glm::vec3> verts;
-	vector<glm::vec3> norms;
-	vector<glm::vec2> textureCoordinates;
-	vector<glm::vec3> tris;
-
-	void draw();
-	void drawWireframe();
-	void drawSolid();
-};
-
-class Triangle : public SceneObject
-{
-public:
-	Mesh* parent;
-	int meshNum;
-	int indices[3];
-
-	Triangle(Mesh* parent, int meshNum, int i1, int i2, int i3)
-	{
-		this->parent = parent;
-		this->meshNum = meshNum;
-		indices[0] = i1;
-		indices[1] = i2;
-		indices[2] = i3;
-	}
-
-	bool intersect(const OrientedBoundingBox& box) override;
-	void draw() {}
-	void updateFromUI() {}
-};
-
 class Mesh : public SceneObject
 {
 public:
 	
 
 	vector<ofMesh> ofmeshes;
-	vector<simpleMesh> meshes;
+	vector<Triangle> tris;
 	ofxToggle smooth;
 
 	Mesh(std::string name)
@@ -289,7 +257,6 @@ public:
 		glm::mat4 trans = getTranslateMatrix();
 
 		return (trans * rotate * scale);
-
 	}
 
 	void draw()
@@ -326,28 +293,40 @@ public:
 		mat.specularColor = mat.specularInput;
 	}
 
-	vector<Triangle*> getTris()
-	{
-		vector<Triangle*> tris;
-		for (int i = 0; i < this->ofmeshes.size(); i++)
-		{
-			vector<ofIndexType> indices = this->ofmeshes[i].getIndices();
-
-			for (int j = 0; j < indices.size(); j += 3)
-			{
-				glm::vec3 v1 = this->ofmeshes[i].getVertices()[indices[j]];
-				glm::vec3 v2 = this->ofmeshes[i].getVertices()[indices[j + 1]];
-				glm::vec3 v3 = this->ofmeshes[i].getVertices()[indices[j + 2]];
-
-				tris.push_back(new Triangle(this, i, j, j+1, j+2));
-			}
-		}
-		return tris;
-	}
-
 private:
 	static int count;
 	void setupUI();
 };
 
+class Triangle : public Intersectable
+{
+public:
+	Mesh* parent;
+	int meshNum;
+	int indices[3];
+	Triangle(const Triangle& t)
+	{
+		this->parent = t.parent;
+		this->meshNum = t.meshNum;
+		this->indices[0] = t.indices[0];
+		this->indices[1] = t.indices[1];
+		this->indices[2] = t.indices[2];
+	}
+	Triangle(Mesh* parent, int meshNum, int i1, int i2, int i3)
+	{
+		this->parent = parent;
+		this->meshNum = meshNum;
+		indices[0] = i1;
+		indices[1] = i2;
+		indices[2] = i3;
+	}
 
+	glm::vec3 get(int i)
+	{
+		return parent->ofmeshes[meshNum].getVertex(indices[i]);
+	}
+
+	bool intersect(const OrientedBoundingBox& box) override;
+	void draw() { ofDrawTriangle(this->get(0), this->get(1), this->get(2)); }
+	void updateFromUI() {}
+};

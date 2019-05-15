@@ -173,76 +173,55 @@ bool Plane::intersect(const OrientedBoundingBox& box)
 }
 bool Triangle::intersect(const OrientedBoundingBox& box)
 {
-	//create a temporary OBB that is transformed into the meshs space
-	glm::mat4 rInv = glm::inverse(this->parent->getRotateMatrix());
-	OrientedBoundingBox temp;
-	temp.center = glm::inverse(this->parent->getTranslateMatrix()) * glm::vec4(box.center, 1);
-	/*temp.axes[0] = glm::normalize(rInv * glm::vec4(this->axes[0], 1));
-	temp.axes[1] = glm::normalize(rInv * glm::vec4(this->axes[1], 1));
-	temp.axes[2] = glm::normalize(rInv * glm::vec4(this->axes[2], 1));*/
-	temp.extents[0] = box.extents[0];
-	temp.extents[1] = box.extents[1];
-	temp.extents[2] = box.extents[2];
+	//get inverse of transformation matrix
+	glm::mat4 mInv = glm::inverse(this->parent->getMatrix());
 
-	//get the vertices of the triangle
-	vector<ofIndexType> indices = this->parent->ofmeshes[this->meshNum].getIndices();
-	glm::vec3 v1 = this->parent->ofmeshes[this->meshNum].getVertices()[this->indices[0]];
-	glm::vec3 v2 = this->parent->ofmeshes[this->meshNum].getVertices()[this->indices[0]];
-	glm::vec3 v3 = this->parent->ofmeshes[this->meshNum].getVertices()[this->indices[0]];
+	//transform the triangle back to world space
+	glm::vec3 v1 = this->parent->getMatrix() * glm::vec4(this->get(0), 0);
+	glm::vec3 v2 = this->parent->getMatrix() * glm::vec4(this->get(1), 0);
+	glm::vec3 v3 = this->parent->getMatrix() * glm::vec4(this->get(2), 0);
 
 	//check intersection
-	return temp.intersectTriangle(v1, v2, v3);
+	return box.intersectTriangle(v1, v2, v3);
 }
 bool Mesh::intersect(const OrientedBoundingBox& box)
 {
-	//create a temporary OBB that is transformed into the meshs space
-	glm::mat4 rInv = glm::inverse(this->getRotateMatrix());
-	OrientedBoundingBox temp;
-	temp.center = glm::inverse(this->getTranslateMatrix()) * glm::vec4(box.center, 1);
-	/*temp.axes[0] = glm::normalize(rInv * glm::vec4(this->axes[0], 1));
-	temp.axes[1] = glm::normalize(rInv * glm::vec4(this->axes[1], 1));
-	temp.axes[2] = glm::normalize(rInv * glm::vec4(this->axes[2], 1));*/
-	temp.extents[0] = box.extents[0];
-	temp.extents[1] = box.extents[1];
-	temp.extents[2] = box.extents[2];
-
-	//iterate through all the meshes, checking every triangle
-	for (int i = 0; i < this->ofmeshes.size(); i++)
+	for (int i = 0; i < this->tris.size(); i++)
 	{
-		vector<ofIndexType> indices = this->ofmeshes[i].getIndices();
-
-		for (int j = 0; j < indices.size(); j += 3)
-		{
-			glm::vec3 v1 = this->ofmeshes[i].getVertices()[indices[j]];
-			glm::vec3 v2 = this->ofmeshes[i].getVertices()[indices[j + 1]];
-			glm::vec3 v3 = this->ofmeshes[i].getVertices()[indices[j + 2]];
-
-			if (temp.intersectTriangle(v1, v2, v3))
-				return true;
-		}
+		if (tris[i].intersect(box))
+			return true;
 	}
-
 	return false;
 }
 
-
-
 bool Mesh::load(std::string name)
 {
+	std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+	//create a assimpModel loader and load the model from the string
 	ofxAssimpModelLoader model;
 	bool m = model.loadModel(name);
 
+
+	//exctract the ofMeshes from the assimpModelLoader and create Triangles for all triangles in the mesh
 	for (int i = 0; i < model.getMeshCount(); i++)
 	{
 		ofmeshes.push_back(model.getMesh(i));
+		for (int j = 0; j < ofmeshes[i].getNumIndices(); j+=3)
+		{
+			tris.push_back(Triangle(this, i, ofmeshes[i].getIndex(j), ofmeshes[i].getIndex(j + 1), ofmeshes[i].getIndex(j+ 2 )));
+		}
 	}
 
+	std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
+
 #if _DEBUG //print out model information
+	cout << "loaded in " << std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / (float)1000000000 << "seconds" << endl;
 	cout << model.getScale() << endl;
 	vector<std::string> names = model.getMeshNames();
 	cout << names.size() << endl;
 	for (int i = 0; i < names.size(); i++)
 	{
+
 		cout << names[i] << endl;
 		cout << "\tNumVerts: " << model.getMesh(i).getNumVertices() << endl;
 		cout << "\tNumFaces: " << model.getMesh(i).getUniqueFaces().size() << endl;
@@ -251,6 +230,8 @@ bool Mesh::load(std::string name)
 		cout << "\tNumTexCoords: " << model.getMesh(i).getTexCoords().size() << endl;
 	}
 #endif
+
+	//clear the assimpModelLoader
 	model.clear();
 	return m;
 }
