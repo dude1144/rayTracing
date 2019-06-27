@@ -5,47 +5,6 @@ int Sphere::count = 0;
 int Plane::count = 0;
 int Mesh::count = 0;
 
-//----------------------------------------------------UI Setups-----------------------------------------------------------------
-void Sphere::setupUI()
-{
-	settings.setup(name);
-	settings.add(positionGroup.setup("Position"));
-	positionGroup.add(xInput.setup("X", position.x, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	positionGroup.add(yInput.setup("Y", position.y, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	positionGroup.add(zInput.setup("Z", position.z, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	//settings.add(radiusInput.setup("Radius", radius, 0, std::numeric_limits<float>::max()));
-	settings.add(&mat.materialGroup);
-	this->updateFromUI();
-}
-
-void Plane::setupUI()
-{
-	settings.setup(name);
-	settings.add(positionGroup.setup("Position"));
-	positionGroup.add(xInput.setup("X", position.x, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	positionGroup.add(yInput.setup("Y", position.y, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	positionGroup.add(zInput.setup("Z", position.z, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	settings.add(normalGroup.setup("Normal"));
-	normalGroup.add(xNormalInput.setup("X", normal.x, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	normalGroup.add(yNormalInput.setup("Y", normal.y, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	normalGroup.add(zNormalInput.setup("Z", normal.z, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	settings.add(&mat.materialGroup);
-	this->updateFromUI();
-}
-
-void Mesh::setupUI()
-{
-	settings.setup(name);
-	settings.add(positionGroup.setup("Position"));
-	positionGroup.add(xInput.setup("X", position.x, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	positionGroup.add(yInput.setup("Y", position.y, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	positionGroup.add(zInput.setup("Z", position.z, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-	settings.add(smooth.setup("Smooth Shading", false));
-	settings.add(&mat.materialGroup);
-	this->updateFromUI();
-}
-
-
 //-------------------------------------------Ray-Intersection methods-----------------------------------------------------------
 
 bool Sphere::intersect(const Ray &ray, IntersectInfo &intersect)
@@ -71,6 +30,41 @@ bool Plane::intersect(const Ray &ray, IntersectInfo &intersect)
 
 		return true;
 	}
+	return false;
+}
+
+bool Triangle::intersect(const Ray &ray, IntersectInfo &intersect)
+{
+	//transform the triangle back to world space
+	glm::vec3 v1 = this->parent->getMatrix() * glm::vec4(this->get(0), 1);
+	glm::vec3 v2 = this->parent->getMatrix() * glm::vec4(this->get(1), 1);
+	glm::vec3 v3 = this->parent->getMatrix() * glm::vec4(this->get(2), 1);
+
+	IntersectInfo info;
+	
+	//check if ray intersects the triangle
+	if (glm::intersectRayTriangle(ray.point, ray.dir, v1, v2, v3, info.barry))
+	{
+		//calculate the z portion of the barrycentric coordinates
+		info.barry.z = 1 - (info.barry.x + info.barry.y);
+		//calculate the intersection point from the barycentric coordinates
+		info.point = (v1 * info.barry.z) + (v2 * info.barry.x) + (v3 * info.barry.y);
+		//calculate the distance to that point
+		info.dist = glm::length(info.point - ray.point);
+
+		//if smoothed, calculate normal using barycentric coordinates, otherwise just use cross product
+		if (this->parent->smooth)
+		{
+			info.normal = (this->parent->ofmeshes[this->meshNum].getNormal(this->parent->ofmeshes[this->meshNum].getIndices()[indices[0]]) * info.barry.z) +
+						  (this->parent->ofmeshes[this->meshNum].getNormal(this->parent->ofmeshes[this->meshNum].getIndices()[indices[1]]) * info.barry.x) +
+						  (this->parent->ofmeshes[this->meshNum].getNormal(this->parent->ofmeshes[this->meshNum].getIndices()[indices[2]]) * info.barry.y);
+		}
+		else
+			info.normal = glm::normalize(glm::cross((v1 - v2), (v1 - v3)));
+		intersect = info;
+		return true;
+	}
+
 	return false;
 }
 
@@ -101,6 +95,7 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 				temp.barry.z = 1 - (temp.barry.x + temp.barry.y);
 				temp.point = (v1 * temp.barry.z) + (v2 * temp.barry.x) + (v3 * temp.barry.y);
 				temp.dist = glm::length(temp.point - p);
+
 				if (temp.dist < closest.dist)
 				{
 					if (smooth)
@@ -114,7 +109,7 @@ bool Mesh::intersect(const Ray &ray, IntersectInfo &intersect)
 			}
 		}
 	}
-	if (closest.dist < std::numeric_limits<float>::max())
+	if (closest.dist < maxFloat)
 	{
 		intersect = closest;
 		intersect.point = getMatrix() * glm::vec4(intersect.point, 1.0);
@@ -150,18 +145,7 @@ bool Plane::intersectView(const Ray &ray, IntersectInfo &intersect)
 	return false;
 }
 
-//--------------------------------------------------SDFs------------------------------------------------------------------------
-float Sphere::sdf(glm::vec3 &p)
-{
-	return glm::length(p - this->position) - this->radius;
-}
-
-float Plane::sdf(glm::vec3 &p)
-{
-	return abs(glm::dot(normal, p - this->position));
-}
-
-//--------------------------------------------------Octree Intersects-----------------------------------------------------------
+//-----------------------------------------------------OBB Intersects-----------------------------------------------------------
 
 bool Sphere::intersect(const OrientedBoundingBox& box)
 {
@@ -173,13 +157,10 @@ bool Plane::intersect(const OrientedBoundingBox& box)
 }
 bool Triangle::intersect(const OrientedBoundingBox& box)
 {
-	//get inverse of transformation matrix
-	glm::mat4 mInv = glm::inverse(this->parent->getMatrix());
-
 	//transform the triangle back to world space
-	glm::vec3 v1 = this->parent->getMatrix() * glm::vec4(this->get(0), 0);
-	glm::vec3 v2 = this->parent->getMatrix() * glm::vec4(this->get(1), 0);
-	glm::vec3 v3 = this->parent->getMatrix() * glm::vec4(this->get(2), 0);
+	glm::vec3 v1 = this->parent->getMatrix() * glm::vec4(this->get(0), 1);
+	glm::vec3 v2 = this->parent->getMatrix() * glm::vec4(this->get(1), 1);
+	glm::vec3 v3 = this->parent->getMatrix() * glm::vec4(this->get(2), 1);
 
 	//check intersection
 	return box.intersectTriangle(v1, v2, v3);
@@ -213,8 +194,9 @@ bool Mesh::load(std::string name)
 	}
 
 	std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
-
-#if _DEBUG //print out model information
+	
+	//print out model information
+#if _DEBUG 
 	cout << "loaded in " << std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / (float)1000000000 << "seconds" << endl;
 	cout << model.getScale() << endl;
 	vector<std::string> names = model.getMeshNames();

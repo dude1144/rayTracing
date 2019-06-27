@@ -23,6 +23,8 @@ public:
 	ofColor ambientColor;     //color and intensity of ambient light
 	float   ambientIntensity;
 
+	bool useOctree = false;
+
 	RenderCam()
 	{
 		ambientColor = ofColor(255, 255, 255);
@@ -31,8 +33,6 @@ public:
 		aim = glm::vec3(0, 0, -1);
 
 		cout << std::thread::hardware_concurrency() << endl;
-
-		settings.setup();
 	}
 
 	Ray getRay(float u, float v);
@@ -44,7 +44,6 @@ public:
 	void drawFrustum();
 	glm::vec3 screenToWorld(float u, float v) { return view.toWorld(u, v); }
 
-	void rayMarchImage(Scene scene, ofImage* image, bool multiThread, glm::vec3 repeat = glm::vec3(0,0,0));
 	void renderImage(Scene* scene, ofImage *image, bool antiAlias, bool multiThread);       //render the image
 	
 

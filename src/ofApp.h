@@ -15,7 +15,8 @@
 #include "bounds.h"
 #include "Octree.h"
 
-class ofApp : public ofBaseApp {
+class ofApp : public ofBaseApp 
+{
 
 public:
 	void setup();
@@ -34,58 +35,46 @@ public:
 	void dragEvent(ofDragInfo dragInfo);
 	void gotMessage(ofMessage msg);
 	void drawAxes();
-
-	void pressedAddSphere();
-	void pressedAddPlane();
-	void pressedAddLight();
-
-	bool showImage = false;
-	bool bShowAddPanel = false;
-	bool dragged = false;
-	bool pressed = false;
-	bool moving = false;
-	bool bShiftPressed = false;
+	void createSelectedSettingsPanel();
+	void handleSelectedUpdate();
 
 	int offsetX = 0;
 	int offsetY = 0;
 	glm::vec3 initialPos;
 
+	//viewport cameras
 	ofEasyCam  mainCam;
 	ofCamera sideCam;
-	ofCamera  *theCam;    // set to current camera either mainCam or sideCam
+	ofCamera  *theCam; 
 
+	//camera to render through and image to save that render to
+	RenderCam renderCam;
 	ofImage   image;
 
+	//scene to hold objects and lights and a pointer to save selected SceneObject
 	SceneObject *selected;
 	Scene scene;
 
-	glm::vec3 repeat = glm::vec3(15, 15, 15);
-
-	ofxPanel addPanel;
-	ofxButton addSphere;
-	ofxButton addPlane;
-	ofxButton addLight;
-
-	Octree tree = Octree(glm::vec3(-10, -10, -10), glm::vec3(10, 10, 10));
-
-	AxisAlignedBoundingBox box = AxisAlignedBoundingBox(glm::vec3(-1, -1, -1), glm::vec3(1, 1, 1));
+	ofxPanel* selectedSettings = nullptr;
+	vector<ofxBaseGui*> settingsList;
 	
-#if _DEBUG // debug tools
+	//panel to change settings, REPLACE WITH PROPER UI
 
 	ofxPanel debugPanel;
 	bool showDebugPanel;
 
-	ofxToggle showIntersectionPoints;
-	ofxToggle showIntersectionNormals;
 	ofxToggle useAntiAliasing;
 	ofxToggle useMultithreading;
-	ofxIntSlider numImageDivisions;
-	ofxIntSlider threadPriority;
+	ofxToggle showOctree;
+	ofxToggle useOctree;
+	ofxFloatSlider maxLevels;
 
-	vector<IntersectInfo> intersections;
-#endif
 
-	// set up one render camera to render image throughn
-	//
-	RenderCam renderCam;
+
+	//booleans to track state
+	bool showImage = false;
+	bool dragged = false;
+	bool pressed = false;
+	bool moving = false;
+	bool bShiftPressed = false;
 };

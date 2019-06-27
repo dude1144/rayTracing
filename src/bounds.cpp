@@ -213,10 +213,7 @@ bool OrientedBoundingBox::intersectRay(glm::vec3 point, glm::vec3 dir) const
 	if (tMax < 0 || tMin > tMax)
 		return false;
 
-	if (tMin < 0)
-		return tMax;
-
-	return tMin;
+	return true;
 }
 
 //intersect an intersectable by calling it's intersect(OrientedBoundingBox) method

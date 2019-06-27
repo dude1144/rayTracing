@@ -22,8 +22,6 @@ public:
 	{ 
 		intensity = 1; 
 		mat.diffuseColor = ofColor(255, 255, 255);
-
-		this->setupUI();
 	}
 
 	Light(glm::vec3 pos, glm::vec3 dir, float i, ofColor col) 
@@ -32,29 +30,6 @@ public:
 		mat.diffuseColor = col; 
 		direction = dir; 
 		position = pos; 
-
-		this->setupUI();
-	}
-
-	void updateFromUI()
-	{
-		position = glm::vec3((float)xInput, (float)yInput, (float)zInput);
-		mat.p = mat.pInput;
-		intensity = mat.pInput;
-		mat.diffuseColor = mat.diffuseInput;
-		mat.specularColor = mat.specularInput;
-
-	}
-
-	void setupUI()
-	{
-		settings.setup("Light");
-		settings.add(positionGroup.setup("Position"));
-		positionGroup.add(xInput.setup("X", position.x, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-		positionGroup.add(yInput.setup("Y", position.y, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-		positionGroup.add(zInput.setup("Z", position.z, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-		settings.add(&mat.materialGroup);
-		this->updateFromUI();
 	}
 };
 
@@ -71,39 +46,14 @@ public:
 		intensity = 10;
 		mat.diffuseColor = ofColor::white;
 		position = glm::vec3(0,0,0);
-
-		this->setupUI();
 	}
 	PointLight(glm::vec3 pos, float i, ofColor col) 
 	{ 
 		intensity = i; 
 		mat.diffuseColor = col; 
-		position = pos; 
-
-		this->setupUI();
+		position = pos;
 	}
 	void draw() { ofDrawSphere(position, .1); }
-
-	void updateFromUI()
-	{
-		position = glm::vec3((float)xInput, (float)yInput, (float)zInput);
-		mat.p = mat.pInput;
-		intensity = mat.pInput;
-		mat.diffuseColor = mat.diffuseInput;
-		mat.specularColor = mat.specularInput;
-
-	}
-
-	void setupUI()
-	{
-		settings.setup("Light");
-		settings.add(positionGroup.setup("Position"));
-		positionGroup.add(xInput.setup("X", position.x, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-		positionGroup.add(yInput.setup("Y", position.y, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-		positionGroup.add(zInput.setup("Z", position.z, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max()));
-		settings.add(&mat.materialGroup);
-		this->updateFromUI();
-	}
 
 	bool intersect(const Ray &ray, IntersectInfo &intersect) 
 	{ 

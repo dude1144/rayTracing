@@ -73,25 +73,9 @@ void RenderCam::renderImage(Scene* scene, ofImage* image, bool antiAlias = false
 
 					popLock.lock();
 					notEmpty = pieces.size() != 0;
-
-					cout << "\r[";
-					for (int j = 0; j < (int)(50 * ((pieceCount-pieces.size())/pieceCount)); j++)
-					{
-						cout << "|";
-					}
-					for (int j = 0; j < 50 - (int)(50 * ((pieceCount - pieces.size()) / pieceCount)); j++)
-					{
-						cout << "-";
-					}
-					cout << "]";
-
-					popLock.unlock();
+ 					popLock.unlock();
 				}
 			}));
-
-			//set thread priority lower so that it doesn't inturrupt other tasks, removed if in release
-			SetThreadPriority(threads[threads.size() - 1].native_handle(), THREAD_MODE_BACKGROUND_BEGIN);
-			SetThreadPriority(threads[threads.size() - 1].native_handle(), -10);
 		}
 
 		//join all the threads
@@ -111,8 +95,9 @@ void RenderCam::renderImage(Scene* scene, ofImage* image, bool antiAlias = false
 	std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / (float)1000000000;
 	cout << "done, rendered in " << time << " seconds" << endl;
-	image->save("render - [" + std::to_string((int)(image->getWidth())) + "x" + std::to_string((int)(image->getHeight())) + "] - " + std::to_string(time) + ".png", OF_IMAGE_QUALITY_BEST);
-	image->load("render.png");
+	string name = "render - [" + std::to_string((int)(image->getWidth())) + "x" + std::to_string((int)(image->getHeight())) + "] - " + std::to_string(time) + ".png";
+	image->save(name, OF_IMAGE_QUALITY_BEST);
+	image->load(name);
 }
 void RenderCam::renderImagePiece(Scene* scene, ofImage *image, int startWidth, int startHeight, int endWidth, int endHeight, bool antiAlias)
 {
@@ -160,7 +145,11 @@ void RenderCam::renderImagePiece(Scene* scene, ofImage *image, int startWidth, i
 ofColor RenderCam::getColor(Scene* scene, float u, float v)
 {
 	IntersectInfo intersect;
-	SceneObject* hit = scene->intersect(this->getRay(u, v), intersect);
+	SceneObject* hit;
+	if(useOctree)
+		hit = scene->intersectOctree(this->getRay(u, v), intersect);
+	else
+		hit = scene->intersect(this->getRay(u, v), intersect);
 
 
 	if (!hit)  //if no object was hit, record the background color

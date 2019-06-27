@@ -10,31 +10,48 @@
 #include <limits>
 #include <chrono>
 
+#define maxFloat std::numeric_limits<float>::max()
+#define minFloat std::numeric_limits<float>::lowest()
+
+enum objectType {sphere, plane, mesh, light, triangle, render_cam, NOT_DEFINED};
+
 class Triangle;
 
+/*
+ * class to hold relevent information for a Ray
+ *
+ * a ray is made up of a point and a direction,
+ * both are stored as GLM vector 3s. the class
+ * also contins convenience methods to get a 
+ * point along the ray.
+ *
+ */
 class Ray : public Intersectable
 {
 public:
 	glm::vec3 dir;
-//public:
 	glm::vec3 point;
 	
 	Ray(glm::vec3 p, glm::vec3 d) { this->point = p; this->dir = d; }
+
 	void draw(float t) { ofDrawLine(point, point + t * dir); }
-
-	glm::vec3 evalPoint(float t)
-	{
-		return (point + t * dir);
-	}
+	glm::vec3 evalPoint(float t) { return (point + t * dir); }
 
 
-	void setDirection(glm::vec3 d)
-	{
-		dir = glm::normalize(d);
-	}
+	void setDirection(glm::vec3 d) { dir = glm::normalize(d); }
 	glm::vec3 getDir() { return dir; }	
 };
 
+/*
+ * class to hold intersection return information
+ *
+ * the class holds the distance from the ray origin,
+ * the point the intersection occured, the normal at
+ * the point of intersection, and the barrycentric
+ * coordinates of the intersection. not all information
+ * has to be used
+ *
+ */
 class IntersectInfo
 {
 public:
@@ -45,50 +62,67 @@ public:
 
 	IntersectInfo()
 	{
-		dist = std::numeric_limits<float>::max();
+		dist = maxFloat;
 		point = glm::vec3(0, 0, 0);
 		normal = glm::vec3(0, 0, 0);
 		barry = glm::vec3(0, 0, 0);
 	}
 };
 
+/*
+ * base class for objects in the scene
+ *
+ * class sets up basic required information
+ * such as name, transformations, and the material
+ * for the object; and required functions for
+ * drawing in the viewport and intersecion
+ *
+ */
 class SceneObject : public Intersectable
 {
 public:
-	glm::vec3 position = glm::vec3(0, 0, 0);
-	Material mat = Material(ofColor::white, ofColor::lightGrey, 10.0f);
-	
-	ofxPanel settings;
-	ofxGuiGroup positionGroup;
-	ofxInputField<float> xInput;
-	ofxInputField<float> yInput;
-	ofxInputField<float> zInput;
-
 	std::string name;
+	objectType type = NOT_DEFINED;
+	glm::vec3 position = glm::vec3(0, 0, 0);
+	glm::vec3 rotation = glm::vec3(0, 0, 0);
+	glm::vec3 scale = glm::vec3(1, 1, 1);
+	Material mat = Material(ofColor::white, ofColor::lightGrey, 10.0f);
 
 	virtual void draw() = 0;
-	virtual void updateFromUI() = 0;
 
-	//point and normal save the point the ray intersects as well as the normal at that point
 	virtual bool intersect(const Ray &ray, IntersectInfo &intersect) { return false; }
 	virtual bool intersectView(const Ray &ray, IntersectInfo &intersect) { return this->intersect(ray, intersect); }
-	virtual float sdf(glm::vec3 &p) { return std::numeric_limits<float>::max(); }
+
+	float intersect(glm::vec3 point, glm::vec3 dir) override
+	{
+		IntersectInfo info;
+		if (this->intersect(Ray(point, dir), info))
+		{
+			return glm::length(point -info.point);
+		}
+		return -1;
+	}
 };
 
 class Sphere : public SceneObject
 {
 public:
-	//class members
 	float radius = 1.0;
-	//ofxInputField<float> radiusInput;
-
 
 	Sphere()
 	{
 		name = "Sphere" + std::to_string(count);
+		type = sphere;
 		count++;
-		this->setupUI();
-		
+	}
+	Sphere(glm::vec3 pos, float r)
+	{
+		position = pos;
+		radius = r;
+
+		name = "Sphere" + std::to_string(count);
+		type = sphere;
+		count++;
 	}
 	Sphere(glm::vec3 pos, float r, ofColor col)
 	{
@@ -97,8 +131,8 @@ public:
 		mat.setDiffuseColor(col);
 
 		name = "Sphere" + std::to_string(count);
+		type = sphere;
 		count++;
-		this->setupUI();
 	}
 	Sphere(glm::vec3 pos, float r, ofColor difCol, ofColor specCol, float p)
 	{
@@ -109,52 +143,32 @@ public:
 		mat.setP(p);
 
 		name = "Sphere" + std::to_string(count);
+		type = sphere;
 		count++;
-		this->setupUI();
 	}
 
 	bool intersect(const Ray& ray, IntersectInfo &intersect) override;
 	bool intersect(const OrientedBoundingBox& box) override;
-	float sdf(glm::vec3 &p) override;
 
+	void draw() { ofDrawSphere(position, radius); }
 
-	void draw()
-	{
-		ofDrawSphere(position, radius);
-	}
-
-	void updateFromUI()
-	{
-		position = glm::vec3((float)xInput, (float)yInput, (float)zInput);
-		//radius = radiusInput;
-		mat.p = mat.pInput;
-		mat.diffuseColor = mat.diffuseInput;
-		mat.specularColor = mat.specularInput;
-	}
 private:
 	static int count;
-	void setupUI();
 };
 
 class Plane : public SceneObject
 {
 public:
-	ofPlanePrimitive plane;
 	float width = 20;
 	float height = 20;
 	glm::vec3 normal = glm::vec3(0, 1, 0);
-	ofxGuiGroup normalGroup;
-	ofxInputField<float> xNormalInput;
-	ofxInputField<float> yNormalInput;
-	ofxInputField<float> zNormalInput;
 
 	Plane() 
 	{ 
 		name = "Plane" + std::to_string(count);
+		type = plane;
 		count++;
 		normal = glm::vec3(0, 1, 0);
-		plane.rotateDeg(90, 1, 0, 0);
-		this->setupUI();
 	}
 	Plane(glm::vec3 pos, glm::vec3 n, ofColor diffuse = ofColor::darkOliveGreen, ofColor spec = ofColor::olive, float p = 1, float w = 20, float h = 20)
 	{
@@ -164,54 +178,30 @@ public:
 		height = h;
 		mat.diffuseColor = diffuse;
 		mat.specularColor = spec;
-		plane.rotateDeg(90, 1, 0, 0);
 
 		name = "Plane" + std::to_string(count);
+		type = plane;
 		count++;
-		this->setupUI();
 	}
 
 	bool intersect(const Ray &ray, IntersectInfo &intersect);
 	bool intersect(const OrientedBoundingBox& box) override;
 	bool intersectView(const Ray &ray, IntersectInfo &intersect);
-	float sdf(glm::vec3 &p) override;
 	
 	void draw()
 	{
+		ofPlanePrimitive plane;
+		plane.rotateDeg(90, 1, 0, 0);
 		plane.setPosition(position);
 		plane.setWidth(width);
 		plane.setHeight(height);
 		plane.setResolution(4, 4);
 		plane.drawWireframe();
-
-#if _DEBUG // draw corners of plane
-		glm::vec3 p1 = glm::vec3((0 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2));
-		glm::vec3 p2 = glm::vec3((0 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2));
-		glm::vec3 p3 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (1 * height) + -1 * (height / 2));
-		glm::vec3 p4 = glm::vec3((1 * width) + -1 * (width / 2), position.y, (0 * height) + -1 * (height / 2));
-
-		ofSetColor(ofColor::red);
-		ofDrawSphere(p1, .1);
-		ofSetColor(ofColor::green);
-		ofDrawSphere(p2, .1);
-		ofSetColor(ofColor::blue);
-		ofDrawSphere(p3, .1);
-		ofSetColor(ofColor::purple);
-		ofDrawSphere(p4, .1);
-#endif
 	}
 
-	void updateFromUI()
-	{
-		position = glm::vec3((float)xInput, (float)yInput, (float)zInput);
-		normal = glm::normalize(glm::vec3((float)xNormalInput, (float)yNormalInput, (float)zNormalInput));
-		mat.p = mat.pInput;
-		mat.diffuseColor = mat.diffuseInput;
-		mat.specularColor = mat.specularInput;
-	}
+
 private:
 	static int count;
-	void setupUI();
 };
 
 class Mesh : public SceneObject
@@ -221,16 +211,23 @@ public:
 
 	vector<ofMesh> ofmeshes;
 	vector<Triangle> tris;
-	ofxToggle smooth;
+	bool smooth;
 
+	Mesh()
+	{
+		this->name = "Mesh" + std::to_string(count);
+		type = mesh;
+		count++;
+		smooth = false;
+	}
 	Mesh(std::string name)
 	{
 		this->name = "Mesh" + std::to_string(count);
+		type = mesh;
 		count++;
-		smooth = true;
+		smooth = false;
 
 		this->load(name);
-		this->setupUI();
 	}
 
 
@@ -285,17 +282,8 @@ public:
 
 	bool load(std::string name);
 
-	void updateFromUI()
-	{
-		position = glm::vec3((float)xInput, (float)yInput, (float)zInput);
-		mat.p = mat.pInput;
-		mat.diffuseColor = mat.diffuseInput;
-		mat.specularColor = mat.specularInput;
-	}
-
 private:
 	static int count;
-	void setupUI();
 };
 
 class Triangle : public Intersectable
@@ -327,6 +315,21 @@ public:
 	}
 
 	bool intersect(const OrientedBoundingBox& box) override;
+	bool intersect(const Ray &ray, IntersectInfo &intersect);
+	float intersect(glm::vec3 point, glm::vec3 dir) override 
+	{ 
+		glm::vec3 v1 = this->parent->getMatrix() * glm::vec4(this->get(0), 1);
+		glm::vec3 v2 = this->parent->getMatrix() * glm::vec4(this->get(1), 1);
+		glm::vec3 v3 = this->parent->getMatrix() * glm::vec4(this->get(2), 1);
+
+		glm::vec3 bary;
+
+		if (glm::intersectRayTriangle(point, dir, v1, v2, v3, bary))
+		{
+			bary.z = 1 - (bary.x + bary.y);
+			return glm::length(((v1 * bary.z) + (v2 * bary.x) + (v3 * bary.y)) - point);
+		}
+		return -1;
+	}
 	void draw() { ofDrawTriangle(this->get(0), this->get(1), this->get(2)); }
-	void updateFromUI() {}
 };

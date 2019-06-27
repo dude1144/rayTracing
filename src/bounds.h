@@ -11,6 +11,7 @@ class Intersectable
 public:
 	virtual bool intersect(const OrientedBoundingBox& box) { return false; }
 	virtual bool intersect(const AxisAlignedBoundingBox& box) { return false; }
+	virtual float intersect(glm::vec3 point, glm::vec3 dir) { return false; }
 };
 
 class boundingBox
